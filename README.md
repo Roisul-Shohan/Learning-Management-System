@@ -2,6 +2,7 @@
 
 - **Project:** Learning Management System (LMS)
 - **Stack:** Node.js, Express, MongoDB (GridFS), EJS templates
+ - **Live Demo:** https://learning-management-system-1-j300.onrender.com
 - **Purpose:** A basic LMS platform with instructors, students, course content (video/file streaming via GridFS), quizzes, progress tracking, and certificate generation.
 
 **Features**:
