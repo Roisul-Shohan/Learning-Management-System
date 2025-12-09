@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | LMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .sidebar-btn {
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-btn.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #fff;
+        }
+         .fade-message {
+            animation: fadeOut 3s forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body class="font-sans bg-gradient-to-b from-slate-500 via-cyan-100 to-slate-500 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-slate-800 sticky top-0 z-50">
+        <div class="w-full px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center ">
+                     <a href="/"> <img src="/images/logo.png" alt="LMS" class="w-10 h-10 object-cover rounded-full"></a>
+                    <span class="ml-2 text-2xl font-bold text-orange-50 lg:ml-4 ">Learning Management System</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-white">Admin</span>
+                    <a href="/logout" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        Sign Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-slate-800 text-white fixed left-0 top-16 h-full shadow-lg mt-4">
+            <div class="p-6">
+                <h2 class="text-xl font-bold mb-6">Admin Panel</h2>
+                <nav class="space-y-2">
+                     <button onclick="showSection('courses')" class="sidebar-btn active w-full text-left px-4 py-3 rounded-lg flex items-center">
+                        <span class="mr-3">📚</span>
+                        All Courses
+                    </button>
+                    <button onclick="showSection('students')" class="sidebar-btn w-full text-left px-4 py-3 rounded-lg flex items-center">
+                        <span class="mr-3">👥</span>
+                        All Students
+                    </button>
+                    <button onclick="showSection('instructors')" class="sidebar-btn w-full text-left px-4 py-3 rounded-lg flex items-center">
+                        <span class="mr-3">👨‍🏫</span>
+                        All Instructors
+                    </button>
+                   
+                    <button onclick="showSection('bank')" class="sidebar-btn w-full text-left px-4 py-3 rounded-lg flex items-center">
+                        <span class="mr-3">🏦</span>
+                        Bank Details
+                    </button>
+                    <button onclick="showSection('certificates')" class=" sidebar-btn  text-left px-4 py-3 rounded-lg flex items-center relative ">
+                        <span class="mr-3">📜</span>
+                        Certificate Request
+                        <% if(certificateRequests.length>0){ %>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"><%=certificateRequests.length%></span>
+                         <%}%>
+                    </button>
+                </nav>
+            </div>
+        </div>
+         <% if(error) { %>
+                      <p class="text-xl mt-2 text-red-700 text-center fade-message">❌<%=error%></p>
+         <%}%>
+
+        <!-- Main Content -->
+        <div class="flex-1 ml-64 p-8 mt-8">
+
+            <!-- All Students Section -->
+            <div id="students-section" class="section hidden">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">All Students</h1>
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <p class="text-gray-600 font-semibold">List of all registered students will be displayed here.</p>
+                  
+                    <div class="mt-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                           <% students.forEach((student)=>{ %>
+                            <div class="bg-gray-100 p-4 rounded-lg">
+                                <h3 class="font-semibold"><%=student.username%></h3>
+                                <p>Email: <span class="text-blue-500"><%=student.email %></span></p>
+                                <button onclick='openCoursesModal(<%- JSON.stringify(student) %>)'  class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 inline-block mt-4">Enrolled Courses</button>
+                            </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Instructors Section -->
+            <div id="instructors-section" class="section hidden">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">All Instructors</h1>
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <p class="text-gray-600">List of all registered instructors will be displayed here.</p>
+                    <div class="mt-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                           <%instructors.forEach((instructor)=>{ %>
+                            <div class="bg-gray-100 p-4 rounded-lg">
+                                <h3 class="font-semibold"><%=instructor.username%></h3>
+                                <p>Email: <span class="text-blue-500"><%=instructor.email %></span></p>
+                                <button onclick='openCoursesModal_instractor(<%- JSON.stringify(instructor) %>)'  class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 inline-block mt-4">Teaching Courses</button>
+                            </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            
+
+             <!-- Bank Details Section -->
+            <div id="bank-section" class="section hidden ">
+                <h1 class="text-3xl font-bold text-gray-900 mb-8">Bank Details</h1>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Current Balance Card -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-4">Current Balance</h2>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-3xl font-bold text-green-600 mt-2">$<%=bank.balance%></p>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                
+                <!-- Show Transactions Button -->
+                <button
+                    onclick="document.getElementById('transactionsSection').classList.toggle('hidden')"
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition mt-4">
+                    Show Transactions
+                </button>
+
+                <!-- Transactions Section (initially hidden) -->
+                <div id="transactionsSection" class="hidden mt-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Recent Transactions</h3>
+                    <% if (transactions && transactions.length > 0) { %>
+                        <div class="space-y-3 max-h-64 overflow-y-auto">
+                            <% transactions.forEach(transaction => { %>
+                                <div class="bg-zinc-700 rounded-lg p-3">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <p class="text-sm text-gray-100 font-medium">
+                                                <%= transaction.description %>
+                                            </p>
+                                            <p class="text-xs text-blue-500">
+                                                <%= new Date(transaction.created_at).toLocaleDateString() %>
+                                            </p>
+                                        </div>
+                                        <span class="text-sm font-bold <%= transaction.amount < 0 ? 'text-red-600' : 'text-green-600' %>">
+                                            +$<%= Math.abs(transaction.amount) %>
+                                        </span>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } else { %>
+                        <p class="text-gray-500 text-sm">No transactions found.</p>
+                    <% } %>
+                </div>
+
+            </div>
+
+            <!-- All Courses Section -->
+            <div id="courses-section" class="section hidden">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">All Courses</h1>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+                    <% if (typeof courses !== 'undefined' && courses && courses.length > 0) { %>
+                        <% courses.forEach((course)=>{ %>
+                            <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover w-full max-w-xs">
+                                <div class="h-48 bg-gray-200 flex items-center justify-center">
+                                   <%
+                                        let imageSrc = "/images/default.avif";  // fallback
+
+                                        if (course.image && course.image.trim() !== "") {
+                                            imageSrc = course.image;
+                                        }
+                                        else if (course.image_data && course.image_data.data) {
+                                            imageSrc = `data:${course.image_data.contentType};base64,${course.image_data.data.toString('base64')}`;
+                                        }
+                                    %>
+
+                                    <img src="<%= imageSrc %>" alt="<%= course.title %>" class="w-full h-full object-cover">
+
+                                </div>
+                                <div class="p-6">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h3 class="text-xl font-semibold text-gray-900">
+                                            <%=course.title %>
+                                        </h3>
+                                        <span class="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded">
+                                            <%=course.level %>
+                                        </span>
+                                    </div>
+                                    <p class="text-gray-600 text-sm mb-4">
+                                        <%=course.description %>
+                                    </p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-lg font-bold text-blue-600">$<%=course.price %></span>
+                                        <a href="/view-details/<%=course._id %>"><button 
+                                            class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 text-sm">
+                                            Show Content
+                                        </button>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <p class="text-gray-600 col-span-full text-center">No courses available.</p>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Certificate Request Section -->
+            <div id="certificates-section" class="section hidden">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">Certificate Requests</h1>
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <p class="text-gray-600">Pending certificate requests will be displayed here.</p>
+                   <% if(certificateRequests && certificateRequests.length>0 ){ %>
+                     <%certificateRequests.forEach((request)=>{ %>
+                    <div class="mt-4">
+                        <div class="space-y-4">
+                            <div class="bg-gray-100 p-4 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <p class="font-semibold text-lg">Student: <span class="text-xl text-blue-600"><%=request.user_id.username%></span></p>
+                                    <p class="font-semibold text-lg">Course: <span class="text-xl text-blue-600"><%=request.course_id.title%></span></p>
+                                    <p class="font-semibold text-lg">Quiz Score: <span class="text-xl text-blue-600"><%=request.final_score%>%</span></p>
+                                    <p class="font-semibold text-lg">Watching Content: <span class="text-xl text-blue-600"><%=request.completion_percent%>%</span></p>
+                                </div>
+                                <a href="/approve/<%=request._id%>">
+                                     <button class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Approve</button>
+                                </a>
+                               
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <%})%>
+                    <%}else{ %>
+                        <h3 class="mt-7 text-2xl text-red-600">No pending request</h3>
+                    <%}%>
+                </div>
+            </div>
+
+            <!-- Courses Modal -->
+            <div id="EnrollcoursesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white p-6 rounded-xl shadow-xl w-[600px] max-h-[80vh] flex flex-col">
+                    
+                    <!-- Header -->
+                    <div  class="flex justify-between items-center mb-4">
+                        <h2 id="header" class="text-2xl font-bold text-gray-800"></h2>
+                        <button onclick="closeCoursesModal()" class="text-gray-500 hover:text-gray-700 text-xl">
+                            ✕
+                        </button>
+                    </div>
+
+                    <div id="enrolledCourses" class="overflow-y-auto pr-2" style="max-height: 65vh;">
+                        
+                    </div>
+
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <script>
+        function showSection(sectionName) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.add('hidden'));
+            const buttons = document.querySelectorAll('.sidebar-btn');
+            buttons.forEach(button => button.classList.remove('active'));
+            document.getElementById(sectionName + '-section').classList.remove('hidden');
+            const activeButton = document.querySelector(`.sidebar-btn[onclick*="showSection('${sectionName}')"]`);
+            if (activeButton) activeButton.classList.add('active');
+        }
+
+       window.addEventListener('DOMContentLoaded', () => {
+
+        const params = new URLSearchParams(window.location.search);
+        const section = params.get('section');
+
+        if (section) {
+            showSection(section); 
+        } else {
+            showSection('courses'); 
+        }
+        });
+
+
+        function openCoursesModal(student) {
+           
+        document.getElementById("EnrollcoursesModal").classList.remove("hidden");
+        const wrapper=document.getElementById('enrolledCourses');
+        wrapper.innerHTML='';
+        document.getElementById('header').innerHTML='All Enrolled Courses';
+        if (student.coursesEnrolled.length === 0) {
+            wrapper.innerHTML = `<p class="text-gray-600">No enrolled courses found.</p>`;
+            return;
+        }
+
+        student.coursesEnrolled.forEach((course)=>{
+            
+            const card = `
+                <div class="p-4 border rounded-lg mb-3 hover:bg-gray-100 transition flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">${course.title}</h3>
+                        <p class="text-gray-600 text-sm mt-1">
+                            Instructor: <span class="text-blue-600 font-medium">${course.instructor_id ? course.instructor_id.username : "Admin"}</span>
+                        </p>
+                        <p class="text-gray-500 text-sm mt-1">
+                            Lessons: ${course.course_content?.length || 0}
+                        </p>
+                    </div>
+                    <div>
+                        <a href="view-details/${course._id}">
+                          <button class= "bg-gradient-to-r from-rose-400 to-rose-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-300 text-sm">
+                                        👁️ View
+                          </button>
+                        </a>
+                    </div>
+                </div>
+            `; 
+
+            wrapper.innerHTML+=card;
+        });
+    }
+
+        function closeCoursesModal() {
+            document.getElementById("EnrollcoursesModal").classList.add("hidden");
+        }
+
+        function openCoursesModal_instractor(instructor) {
+        
+        document.getElementById("EnrollcoursesModal").classList.remove("hidden");
+        const wrapper=document.getElementById('enrolledCourses');
+        wrapper.innerHTML='';
+        document.getElementById('header').innerHTML=`All Courses Offered By ( ${instructor.username} )`;
+        if (instructor.my_courses.length === 0) {
+            wrapper.innerHTML = `<p class="text-gray-600">No courses found.</p>`;
+            return;
+        }
+
+        instructor.my_courses.forEach((course)=>{
+            
+            const card = `
+                <div class="p-4 border rounded-lg mb-3 hover:bg-gray-100 transition flex justify-between items-center">
+                 <div>
+                    <h3 class="text-lg font-semibold text-gray-800">${course.title}</h3>
+                    <p class="text-gray-500 text-sm mt-1">
+                        Lessons: ${course.course_content?.length || 0}
+                    </p>
+                 </div>
+                  <div>
+                     <a href="view-details/${course._id}">
+                          <button class= "bg-gradient-to-r from-rose-400 to-rose-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-300 text-sm">
+                                        👁️ View
+                          </button>
+                        </a>
+                  </div>
+                </div>
+            `; 
+
+            wrapper.innerHTML+=card;
+        });
+    }
+
+
+    </script>
+</body>
+</html>

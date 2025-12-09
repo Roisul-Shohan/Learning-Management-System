@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= course.title %> - Course Content | LMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .sidebar-btn {
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-btn.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #fff;
+        }
+    </style>
+</head>
+<body class="font-sans bg-gradient-to-b from-slate-500 via-cyan-100 to-slate-500 min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="bg-slate-800 sticky top-0 z-50">
+        <div class="w-full px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center">
+                    <a href="/"> <img src="/images/logo.png" alt="LMS" class="w-10 h-10 object-cover rounded-full"></a>
+                    <span class="ml-2 text-2xl font-bold text-orange-50 lg:ml-4">Learning Management System</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <% if (user && user.image && user.image.data) { %>
+                        <img src="data:<%= user.image.contentType %>;base64,<%= user.image.data.toString('base64') %>" alt="Profile" class="w-10 h-10 object-cover rounded-full">
+                    <% } else { %>
+                        <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                            <span class="text-gray-600 font-semibold"><%= user ? user.username.charAt(0).toUpperCase() : 'U' %></span>
+                        </div>
+                    <% } %>
+                    <a href="/logout" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        Sign Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-slate-800 text-white fixed left-0 top-16 h-full shadow-lg mt-4">
+            <div class="p-6">
+                <h2 class="text-xl font-bold mb-6">Navigation</h2>
+                <nav class="space-y-2">
+                    <% let pendingCount = quizzes ? quizzes.filter(q => !q.submitted).length : 0; %>
+                    <button onclick="showSection('content')" class="sidebar-btn w-full text-left px-4 py-3 rounded-lg flex items-center">
+                        <span class="mr-3">📚</span>
+                        Show Content
+                    </button>
+                    <button onclick="showSection('quiz')" class="sidebar-btn w-full text-left px-4 py-3 rounded-lg flex items-center">
+                        <span class="mr-3">📝</span>
+                        Quizzes
+                        <% if (pendingCount > 0) { %>
+                            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full"><%= pendingCount %></span>
+                        <% } %>
+                    </button>
+                    <div class="relative">
+                        <% if(!certificate){ %>
+                        <button onclick="applyForCertificate('<%=course._id %>')" class="sidebar-btn">
+                            <span class="mr-3">🏆</span>
+                            Apply for Certificate
+                        </button>
+                        <div id="msg" class=""></div>
+                        <% }else{ %>
+                            <a href="/student/certificate/<%=certificate._id %>">
+                                <button class="sidebar-btn ... ">
+                                    <div class="flex item-center justify-between">
+                                        <span class="mr-3">🏆</span>
+                                        <div>
+                                            <p>Certificate Available</p>
+                                            <span class="text-blue-700 ">Download</span>
+                                        </div>
+                                    </div>
+                           
+                                </button>
+                            </a>
+                            
+                        <% } %>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+     <div class="flex-1 ml-64 p-8 mt-8">
+
+            <!-- Course Header -->
+            <div class="bg-white rounded-xl shadow-sm p-8 mb-8">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <h1 class="text-3xl font-semibold text-gray-900">Course Title: <span class="text-indigo-700 text-4xl font-bold"><%= course.title %></span> </h1>
+                    <a href="/student/student_dashboard?section=enrolled" class="bg-slate-700 text-white px-4 py-2 rounded-lg hover:bg-slate-900 transition-all duration-300">
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- Course Content Section -->
+            <div id="content-section" class="section">
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Course Content</h2>
+
+                    <% if (courseContents && courseContents.length > 0) { %>
+                        <div class="space-y-6">
+                            <% courseContents.forEach((content, index) => { %>
+                                <div class="border border-gray-200 rounded-lg p-6 card-hover">
+                                    <div class="flex items-start justify-between mb-4">
+                                        <div class="flex-1">
+                                            <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                                                <%= index + 1 %>. <%= content.title %>
+                                            </h3>
+                                            <p class="text-gray-600 mb-3"><%= content.description %></p>
+                                            <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                                <span class="bg-gray-100 px-2 py-1 rounded">
+                                                    <%= content.type.toUpperCase() %>
+                                                </span>
+                                                <% if (content.duration_seconds && content.duration_seconds > 0) { %>
+                                                    <span><%= Math.floor(content.duration_seconds / 60) %>:<%= (content.duration_seconds % 60).toString().padStart(2, '0') %> min</span>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                   <!-- Content Display -->
+                                   <div class="mt-4">
+                                    <% if (content.type === 'video') { %>
+                                       <%
+                                       let videoSrc = '';
+                                       let embedSrc = '';
+                                      
+
+                                       if (content.file_id) {
+                                           videoSrc = `/progress/student/video/${content._id}`;
+                                       } %>
+                                       
+                                           <video id="video-<%= content._id %>" controls preload="metadata" class="w-full max-w-2xl" crossorigin="anonymous" data-duration="<%= content.duration_seconds %>""  data-watched="<%= progressMap[content._id] || 0 %>">
+                                               <% if (videoSrc) { %>
+                                                   <source src="<%= videoSrc %>" type="<%= content.file_mimetype || 'video/mp4' %>">
+                                               <% } %>
+                                               Your browser does not support the video tag.
+                                           </video>
+                                       
+                                    <% } else if (content.type === 'pdf') { %>
+                                        <div class="border border-gray-300 rounded-lg p-4">
+                                            <iframe src="/progress/student/file/<%= content._id %>"
+                                                    class="w-full h-96 border-0 rounded"
+                                                    title="<%= content.title %>">
+                                            </iframe>
+                                            <div class="mt-2 text-center">
+                                                <a href="/progress/student/file/<%= content._id %>"
+                                                download="<%= content.file_name || 'document.pdf' %>"
+                                                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                                                    Download PDF
+                                                </a>
+                                            </div>
+                                        </div>
+                                    <% } else if (content.type === 'slide') { %>
+                                        <div class="border border-gray-300 rounded-lg p-4">
+                                            <iframe src="/progress/student/file/<%= content._id %>"
+                                                    class="w-full h-96 border-0 rounded"
+                                                    title="<%= content.title %>">
+                                            </iframe>
+                                            <div class="mt-2 text-center">
+                                                <a href="/progress/student/file/<%= content._id %>"
+                                                download="<%= content.file_name || 'slides.pptx' %>"
+                                                class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
+                                                    Download Slides
+                                                </a>
+                                            </div>
+                                        </div>
+                                         <% } %>
+                                     </div>
+
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-12">
+                            <div class="text-gray-400 text-6xl mb-4">📚</div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">No Content Available</h3>
+                            <p class="text-gray-600">This course doesn't have any content uploaded yet.</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Quiz Section -->
+            <div id="quiz-section" class="section hidden">
+                <% if (quizzes && quizzes.length > 0) { %>
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Quizzes</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <% quizzes.forEach((quiz) => { %>
+                            <div class="bg-gray-50 rounded-lg p-6 border border-gray-200 card-hover">
+                                <div class="flex justify-between items-start mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900"><%= quiz.title %></h3>
+                                    <% if (!quiz.submitted) { %>
+                                        <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
+                                            Pending
+                                        </span>
+                                    <% } else { %>
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                                            Completed
+                                        </span>
+                                    <% } %>
+                                </div>
+
+                                <p class="text-gray-600 text-sm mb-4">
+                                    <%= quiz.questions.length %> Questions
+                                </p>
+
+                                <% if (!quiz.submitted) { %>
+                                    <button onclick="takeQuiz('<%= quiz._id %>', '<%= quiz.title %>')"
+                                            class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">
+                                        Take Quiz
+                                    </button>
+                                <% } else { %>
+                                    <div class="space-y-2">
+                                        <p class="text-center text-sm text-gray-600">
+                                            Score: <span class="font-bold"><%= quiz.submission.score %>/<%= quiz.submission.total %></span>
+                                        </p>
+                                        <button onclick="viewResults('<%= quiz._id %>')"
+                                                class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors">
+                                            View Results
+                                        </button>
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+                <% } else { %>
+                    <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                        <div class="text-center py-12">
+                            <div class="text-gray-400 text-6xl mb-4">📝</div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">No Quizzes Available</h3>
+                            <p class="text-gray-600">This course doesn't have any quizzes yet.</p>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+
+    </div>
+
+    <!-- Quiz Modal -->
+    <div id="quizModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" onclick="closeQuizModal()">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900" id="quizTitle">Quiz</h2>
+                    <button onclick="closeQuizModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+
+                <div id="quizContent">
+                    <!-- Quiz questions will be loaded here -->
+                </div>
+
+                <div class="flex justify-end mt-6 space-x-4">
+                    <button onclick="closeQuizModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                        Cancel
+                    </button>
+                    <button onclick="submitQuiz()" id="submitBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                        Submit Quiz
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="resultsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" onclick="closeResultsModal()">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Quiz Results</h2>
+                    <button onclick="closeResultsModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+
+                <div id="resultsContent">
+                    <!-- Results will be loaded here -->
+                </div>
+
+                <div class="flex justify-end mt-6">
+                    <button onclick="closeResultsModal()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('video[id^="video-"]');
+    videos.forEach(video => {
+        const contentId = video.id.replace('video-', '');
+        const durationSeconds = parseFloat(video.getAttribute('data-duration')) || 0;
+        
+        let watchedSeconds= parseFloat(video.getAttribute('data-watched'))||0; 
+        let lastPosition=watchedSeconds; 
+        let lastUpdate = Date.now();
+        let isPageVisible = true;
+
+        document.addEventListener('visibilitychange', () => {
+            isPageVisible = document.visibilityState === 'visible';
+        });
+
+        function updateProgress() {
+            console.log('djjdjjdj',real_watch);
+            fetch('/progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content_id: contentId,
+                    watched_seconds: Math.floor(real_watch),
+                    completed: video.ended || (durationSeconds > 0 && video.currentTime >= durationSeconds * 0.9)
+                })
+            })
+            .then(res => res.json())
+            .then(data => {console.log('Progress updated:', data);
+                watchedSeconds=data.watched_seconds;
+            })
+            .catch(err => console.error('Progress update failed:', err));
+        }
+        let real_watch=0;
+        const interval = setInterval(() => {
+            if (!isPageVisible) return;
+
+            const current = video.currentTime;
+           
+            const delta = current - lastPosition;
+           
+            if (delta > 0 && delta < 2&&current>watchedSeconds) {
+                console.log("current :",current);
+                 console.log("watchedSecond:",watchedSeconds);
+                  console.log("delta :",delta);
+               real_watch+= delta; 
+              
+            }
+                    
+
+            lastPosition = current;
+
+            if (Date.now() - lastUpdate >= 5000) {
+                lastUpdate = Date.now();
+                updateProgress();
+                real_watch=0;
+            }
+        }, 1000);
+
+        video.addEventListener('ended', () => {
+            maxWatchedPoint = durationSeconds;
+            updateProgress();
+            clearInterval(interval);
+        });
+
+        video.addEventListener('play', () => console.log('Video playing:', contentId));
+        video.addEventListener('loadedmetadata', () => {
+            console.log('Metadata loaded for:', contentId);
+        });
+        video.addEventListener('error', e => console.error('Video error:', contentId, e));
+    });
+});
+
+// Quiz functionality
+let currentQuizId = null;
+let currentQuizData = null;
+
+function takeQuiz(quizId, title) {
+    currentQuizId = quizId;
+    document.getElementById('quizTitle').textContent = title;
+    document.getElementById('quizModal').classList.remove('hidden');
+
+    // Fetch quiz data
+    fetch(`/quiz/${quizId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.quiz) {
+                currentQuizData = data.quiz;
+                renderQuiz(data.quiz);
+            } else {
+                alert('Quiz not found');
+                closeQuizModal();
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching quiz:', err);
+            alert('Error loading quiz: ' + err.message);
+            closeQuizModal();
+        });
+}
+
+function renderQuiz(quiz) {
+    const quizContent = document.getElementById('quizContent');
+    quizContent.innerHTML = '';
+
+    quiz.questions.forEach((question, qIndex) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'mb-6 p-4 border border-gray-200 rounded-lg';
+        questionDiv.innerHTML = `
+            <h4 class="text-lg font-semibold mb-3">${qIndex + 1}. ${question.question}</h4>
+            <div class="space-y-2">
+                ${question.options.map((option, oIndex) => `
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="radio" name="question-${qIndex}" value="${oIndex}"
+                               class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                        <span class="text-gray-700">${option}</span>
+                    </label>
+                `).join('')}
+            </div>
+        `;
+        quizContent.appendChild(questionDiv);
+    });
+}
+
+function submitQuiz() {
+    if (!currentQuizId || !currentQuizData) return;
+
+    const answers = [];
+    currentQuizData.questions.forEach((question, index) => {
+        const selected = document.querySelector(`input[name="question-${index}"]:checked`);
+        answers.push(selected ? parseInt(selected.value) : null);
+    });
+
+    // Check if all questions are answered
+    if (answers.some(answer => answer === null)) {
+        alert('Please answer all questions before submitting.');
+        return;
+    }
+
+    fetch(`/quiz/course/${currentQuizId}/submit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ answers })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === 'Quiz submitted successfully') {
+            closeQuizModal();
+            showResults(data.submission, data.quiz || currentQuizData);
+        } else {
+            alert(data.message || 'Error submitting quiz');
+        }
+    })
+    .catch(err => {
+        console.error('Error submitting quiz:', err);
+        alert('Error submitting quiz');
+    });
+}
+
+function showResults(submissionData, quizData) {
+    console.log('Submission data:', submissionData);
+    console.log('Quiz data:', quizData);
+
+    if (!submissionData || !submissionData.answers) {
+        console.error('Submission data or answers missing:', submissionData);
+        alert('Error displaying results: Submission data not available');
+        return;
+    }
+
+    if (!quizData || !quizData.questions) {
+        console.error('Quiz data or questions missing:', quizData);
+        alert('Error displaying results: Quiz data not available');
+        return;
+    }
+
+    const resultsModal = document.getElementById('resultsModal');
+    const resultsContent = document.getElementById('resultsContent');
+
+    resultsContent.innerHTML = `
+        <div class="text-center mb-6">
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Quiz Completed!</h3>
+            <p class="text-lg text-gray-600">Your Score: <span class="font-bold text-blue-600">${submissionData.score}/${submissionData.total}</span></p>
+        </div>
+        <div class="space-y-4">
+            ${quizData.questions.map((question, index) => {
+                const userAnswer = submissionData.answers[index];
+                const isCorrect = userAnswer === question.correctIndex;
+                return `
+                    <div class="p-4 border rounded-lg ${isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}">
+                        <h4 class="font-semibold mb-2">${index + 1}. ${question.question}</h4>
+                        <div class="space-y-1">
+                            ${question.options.map((option, oIndex) => {
+                                let className = 'text-gray-600';
+                                if (oIndex === question.correctIndex) {
+                                    className = 'text-green-700 font-semibold';
+                                } else if (oIndex === userAnswer && !isCorrect) {
+                                    className = 'text-red-700';
+                                }
+                                return `<p class="${className}">• ${option}</p>`;
+                            }).join('')}
+                        </div>
+                        <p class="mt-2 text-sm ${isCorrect ? 'text-green-600' : 'text-red-600'}">
+                            ${isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                        </p>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+
+    resultsModal.classList.remove('hidden');
+}
+
+function viewResults(quizId) {
+    // Find the quiz data from the rendered quizzes
+    const quizzesData = <%- JSON.stringify(quizzes) %>;
+    const quiz = quizzesData.find(q => q._id === quizId);
+    if (quiz && quiz.submission) {
+        showResults({
+            score: quiz.submission.score,
+            total: quiz.submission.total,
+            answers: quiz.submission.answers
+        }, quiz);
+    }
+}
+
+function closeQuizModal() {
+    document.getElementById('quizModal').classList.add('hidden');
+    currentQuizId = null;
+    currentQuizData = null;
+}
+
+function closeResultsModal() {
+    document.getElementById('resultsModal').classList.add('hidden');
+    // Reload the page to update quiz status
+    window.location.reload();
+}
+
+function showSection(sectionName) {
+    const sections = document.querySelectorAll('.section');
+    sections.forEach(section => section.classList.add('hidden'));
+    const buttons = document.querySelectorAll('.sidebar-btn');
+    buttons.forEach(button => button.classList.remove('active'));
+    document.getElementById(sectionName + '-section').classList.remove('hidden');
+    const activeButton = document.querySelector(`.sidebar-btn[onclick*="showSection('${sectionName}')"]`);
+    if (activeButton) activeButton.classList.add('active');
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    showSection('content');
+});
+
+async function applyForCertificate(course_id){
+    try
+    {
+        const res=await fetch(`/student/applyCertificate/${course_id}`,
+            {
+                  method:"POST",
+                  headers:{"Content-Type":"application/json"},
+                  body:JSON.stringify({})
+            }
+        );
+       
+        const data=await res.json();
+      
+        let element=  document.getElementById('msg');
+
+        if(res.ok){
+          element.innerHTML=data.message;
+          element.classList.add('text-green-600', 'text-sm', 'mt-1');
+        }else{
+          
+          element.innerHTML=data.message;
+          element.classList.add('text-green-600', 'text-sm', 'mt-1');
+        }
+
+       setTimeout(() => {
+            element.innerHTML = '';
+            element.className = '';
+        }, 2000);
+
+    }catch(err){
+          let element=  document.getElementById('msg');
+          element.innerHTML=`something went wrong`;
+          element.classList.add('text-green-600', 'text-sm', 'mt-1');
+         
+          setTimeout(() => {
+            element.innerHTML = '';
+            element.className = '';
+        }, 2000);
+    }
+}
+
+
+</script>
+
+</body>
+</html>
+

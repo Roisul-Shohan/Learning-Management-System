@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard | LMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .sidebar-btn {
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-btn.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #fff;
+        }
+         .fade-message {
+            animation: fadeOut 3s forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+    </style>
+</head>
+<body class="font-sans bg-gradient-to-b from-slate-500 via-cyan-100 to-slate-500 min-h-screen">
+
+
+    <!--Bank secret for first time visit-->
+    <% if (!user.bank_id) { %>
+    <div id="bankModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[9999]">
+        <div class="bg-white p-8 rounded-xl shadow-xl w-96 text-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Bank Verification</h2>
+            <p class="text-gray-600 mb-6">
+                Please set your bank secret to continue.
+            </p>
+
+            <form action="/student/bank-secret" method="POST" class="space-y-4">
+                <input type="password" name="secret"
+                    placeholder="Enter Bank Secret"
+                    required
+                    class="w-full border border-gray-300 p-3 rounded-lg focus:ring focus:ring-orange-300 outline-none">
+
+                <button class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
+                    Confirm
+                </button>
+            </form>
+        </div>
+    </div>
+    <% } %>
+
+   
+    <!-- Navigation -->
+    <nav class="bg-slate-800 sticky top-0 z-50">
+        <div class="w-full px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center ">
+                     <a href="/"> <img src="/images/logo.png" alt="LMS" class="w-10 h-10 object-cover rounded-full"></a>
+                    <span class="ml-2 text-2xl font-bold text-orange-50 lg:ml-4 ">Learning Management System</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <% if (user && user.image && user.image.data) { %>
+                        <img src="data:<%= user.image.contentType %>;base64,<%= user.image.data.toString('base64') %>" alt="Profile" class="w-10 h-10 object-cover rounded-full">
+                    <% } else { %>
+                        <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                            <span class="text-gray-600 font-semibold"><%= user ? user.username.charAt(0).toUpperCase() : 'U' %></span>
+                        </div>
+                    <% } %>
+                    <a href="/logout" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        Sign Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <div class="flex min-h-screen <%= !user.bank_id  ? 'blur-disabled' : '' %>">
+        <!-- Sidebar -->
+        <div class="w-64 bg-slate-800 text-white fixed left-0 top-16 h-full shadow-lg mt-4">
+            <div class="p-6">
+                <h2 class="text-xl font-bold mb-6">Dashboard</h2>
+                <nav class="space-y-2">
+                    <button onclick="showSection('available')" class="sidebar-btn active w-full text-left px-4 py-3 rounded-lg flex items-center">
+                        <span class="mr-3">📚</span>
+                        Available Courses
+                    </button>
+                    <button onclick="showSection('enrolled')" class="sidebar-btn w-full text-left px-4 py-3 rounded-lg flex items-center">
+                        <span class="mr-3">🎓</span>
+                        Enrolled Courses
+                    </button>
+
+                    <button onclick="showSection('pending')" class="sidebar-btn w-full text-left px-4 py-3 rounded-lg flex items-center">
+                        <span class="mr-3">🎓</span>
+                        Pending Courses
+                    </button>
+
+                    <button onclick="showSection('profile')" class="sidebar-btn w-full text-left px-4 py-3 rounded-lg flex items-center">
+                        <span class="mr-3">👤</span>
+                        Edit Profile
+                    </button>
+                    <button onclick="showSection('bank')" class="sidebar-btn w-full text-left px-4 py-3 rounded-lg flex items-center">
+                        <span class="mr-3">🏦</span>
+                        Bank Details
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 ml-64 p-8 mt-8">
+
+             <% if(error) { %>
+              <p class="text-xl mb-2 text-red-700 text-center fade-message">❌<%=error%></p>
+            <%}%>
+
+
+            <!-- Available Courses Section -->
+            <div id="available-section" class="section">
+               <% if(availableCourses && availableCourses.length>0) { %> 
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">Available Courses</h1>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+                    <% availableCourses.forEach((course)=>{ %>
+                        <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover w-full max-w-xs">
+                            <div class="h-48 bg-gray-200 flex items-center justify-center">
+                               <% 
+                                    let imageSrc = "/images/default.avif";  // fallback
+
+                                    if (course.image && course.image.trim() !== "") {
+                                        imageSrc = course.image;
+                                    } 
+                                    else if (course.image_data && course.image_data.data) {
+                                        imageSrc = `data:${course.image_data.contentType};base64,${course.image_data.data.toString('base64')}`;
+                                    }
+                                %>
+
+                                <img src="<%= imageSrc %>" alt="<%= course.title %>" class="w-full h-full object-cover">
+
+                            </div>
+                            <div class="p-6">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-xl font-semibold text-gray-900">
+                                        <%=course.title %>
+                                    </h3>
+                                    <span class="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded">
+                                        <%=course.level %>
+                                    </span>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-4">
+                                    <%=course.description %>
+                                </p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-lg font-bold text-blue-600">$<%=course.price %></span>
+                                     <button 
+                                         onclick="openSecretModal('<%= course._id %>')" 
+                                         class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 text-sm">
+                                         Enroll Now
+                                    </button>
+
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+                <% } else { %>
+                    <p>No courses available right now.</p>
+                <% } %>
+            </div>
+
+          <!-- Pending Courses Section -->
+            <div id="pending-section" class="section">
+                <% if(pendingCourses && pendingCourses.length > 0) { %>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-6">Pending Courses</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+                        <% pendingCourses.forEach((course) => { %>
+                            <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover w-full max-w-xs">
+                                <div class="h-48 bg-gray-200 flex items-center justify-center">
+                                    <img 
+                                        src="data:<%= course.image_data.contentType %>;base64,<%= course.image_data.data.toString('base64') %>" 
+                                        alt="<%= course.title %>" 
+                                        class="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div class="p-6">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h3 class="text-xl font-semibold text-gray-900">
+                                            <%= course.title %>
+                                        </h3>
+                                        <span class="bg-yellow-100 text-yellow-800 text-sm px-2 py-1 rounded">
+                                            Pending
+                                        </span>
+                                    </div>
+                                    <p class="text-gray-600 text-sm mb-4">
+                                        <%= course.description %>
+                                    </p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-lg font-bold text-blue-600">$<%= course.price %></span>
+                                        <button 
+                                            disabled
+                                            class="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm cursor-not-allowed">
+                                            Awaiting Approval
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <p>You have no pending course enrollments.</p>
+                <% } %>
+            </div>
+
+           <!-- Enrolled Courses Section -->
+            <div id="enrolled-section" class="section hidden">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">Enrolled Courses</h1>
+                
+                <% if(enrolledCourses && enrolledCourses.length > 0) { %>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+                    <% enrolledCourses.forEach((course) => { %>
+                        <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover w-full max-w-xs">
+                            <div class="h-48 bg-gray-200 flex items-center justify-center">
+                                <% 
+                                    let imageSrc = "/images/default.avif";  // fallback
+
+                                    if (course.image && course.image.trim() !== "") {
+                                        imageSrc = course.image;
+                                    } 
+                                    else if (course.image_data && course.image_data.data) {
+                                        imageSrc = `data:${course.image_data.contentType};base64,${course.image_data.data.toString('base64')}`;
+                                    }
+                                %>
+
+                                <img src="<%= imageSrc %>" alt="<%= course.title %>" class="w-full h-full object-cover">
+                            </div>
+                            <div class="p-6">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-xl font-semibold text-gray-900">
+                                        <%= course.title %>
+                                    </h3>
+                                    <span class="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded">
+                                        <%= course.level %>
+                                    </span>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-4">
+                                    <%= course.description %>
+                                </p>
+                                <div class="flex justify-center">
+                                    <a href="/student/course/<%= course._id %>/content"
+                                    class="bg-slate-700 text-white px-4 py-2 rounded-lg hover:bg-slate-900 transition-all duration-300 text-sm">
+                                        Show Content
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+                <% } else { %>
+                    <p class="text-gray-600">You have not enrolled in any courses yet.</p>
+                <% } %>
+            </div>
+
+            <!-- Edit Profile Section -->
+            <div id="profile-section" class="section hidden">
+            <h1 class="text-3xl font-bold text-gray-900 mb-6 text-center">Edit Profile</h1>
+            <!-- Container for both card and form -->
+            <div class="flex justify-center items-center min-h-[60vh]">
+                <!-- Profile Card -->
+                <div id="profileCard" class="bg-gradient-to-tl from-slate-500 via-cyan-100 to-slate-500  rounded-2xl shadow-xl p-10 max-w-md w-full border-none">
+                    <div class="text-center space-y-6">
+                        <!-- Profile Image -->
+                        <div class="flex justify-center">
+                            <% if (user && user.image && user.image.data) { %>
+                                <img src="data:<%= user.image.contentType %>;base64,<%= user.image.data.toString('base64') %>" alt="Profile" class="h-32 w-32 md:h-35 md:w-35 lg:h-42 lg:w-42 object-cover rounded-full  border-4 border-blue-100">
+                            <% } else { %>
+                                <div class="h-12 w-12 md:h-20 md:w-20 lg:h-24 lg:w-24 bg-gradient-to-br from-rose-500 to-orange-600  rounded-2xl flex items-center justify-center text-3xl font-bold text-white shadow-lg border-4 border-blue-100">
+                                    <%= user.username.charAt(0).toUpperCase() %>
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <!-- Profile Details -->
+                        <div class="space-y-4 text-left">
+                            <div class="bg-white/70 rounded-xl p-4 shadow-sm border border-blue-50">
+                                <label class="block text-sm font-semibold text-blue-700 mb-1">Username:</label>
+                                <span class="text-lg text-gray-800 font-medium"><%= user.username %></span>
+                            </div>
+
+                            <div class="bg-white/70 rounded-xl p-4 shadow-sm border border-blue-50">
+                                <label class="block text-sm font-semibold text-blue-700 mb-1">Email:</label>
+                                <span class="text-lg text-gray-800 font-medium"><%= user.email %></span>
+                            </div>
+                        </div>
+
+                        <!-- Edit Button -->
+                        <button onclick="toggleEditForm()" class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 px-6 rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                            Edit Profile
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Edit Profile Form (Initially Hidden) -->
+                <form id="editProfileForm" action="/student/update-profile" method="POST" enctype="multipart/form-data" class="bg-gradient-to-b from-slate-500 via-cyan-100  to-slate-500 rounded-2xl shadow-xl p-10 max-w-md w-full border-none hidden">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Profile Image</label>
+                            <input type="file" name="image" accept="image/*"
+                                class="w-full bg-white border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Username</label>
+                            <input type="text" name="username" value="<%= user.username %>" required
+                                class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Email</label>
+                            <input type="email" name="email" value="<%= user.email %>" required
+                                class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Password</label>
+                            <input type="password" name="password" placeholder="Enter new password if you want to change"
+                                class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none transition">
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button type="button" onclick="toggleEditForm()" class="flex-1 bg-cyan-600 text-white py-3 px-4 rounded-xl hover:bg-gray-600 transition">
+                                Cancel
+                            </button>
+                            <button type="submit" class="flex-1  bg-rose-500 text-white py-3 px-4 rounded-xl hover:bg-rose-700  transition">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+           </div>
+            
+            <!-- Bank Details Section -->
+            <div id="bank-section" class="section hidden">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6 text-center">Bank Details</h1>
+
+                <!-- Container for centering -->
+                <div class="flex justify-center items-center min-h-[60vh]">
+                    <div class="bg-gradient-to-b from-slate-500 via-slate-400 to-slate-500 rounded-xl shadow-sm p-8 max-w-md w-full">
+
+                    <!-- Current Balance -->
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-100">Current Balance</h2>
+                        <p class="text-3xl font-bold text-green-900 mt-2">
+                            $<%= bank ? bank.balance : 0 %>
+                        </p>
+                    </div>
+
+                    <!-- Add Balance Button -->
+                    <button
+                        onclick="document.getElementById('addBalanceForm').classList.toggle('hidden')"
+                        class="bg-cyan-800 text-white px-4 py-2 rounded-lg hover:bg-cyan-900 transition">
+                        Add Balance
+                    </button>
+
+                    <!-- Add Balance Form (initially hidden) -->
+                    <form id="addBalanceForm" action="/student/add-balance" method="POST" class="hidden mt-4">
+                        <input
+                            type="number"
+                            name="amount"
+                            placeholder="Enter amount"
+                            class="w-full border border-gray-300 p-3 rounded-lg mb-4 outline-none"
+                            required
+                        />
+                         <input
+                            type="password"
+                            name="secret"
+                            placeholder="Your bank secret"
+                            class="w-full border border-gray-300 p-3 rounded-lg mb-4 outline-none"
+                            required
+                        />
+
+                        <button class="bg-pink-700 text-white px-4 py-2 rounded-lg hover:bg-slate-600 transition">
+                            Add Now
+                        </button>
+                    </form>
+
+                    <!-- Show Transactions Button -->
+                    <button
+                        onclick="document.getElementById('transactionsSection').classList.toggle('hidden')"
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition mt-4">
+                        Show Transactions
+                    </button>
+
+                    <!-- Transactions Section (initially hidden) -->
+                    <div id="transactionsSection" class="hidden mt-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">Recent Transactions</h3>
+                        <% if (transactions && transactions.length > 0) { %>
+                            <div class="space-y-3 max-h-64 overflow-y-auto">
+                                <% transactions.forEach(transaction => { %>
+                                    <div class="bg-zinc-600 rounded-lg p-3">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <p class="text-sm text-white font-medium">
+                                                    <%= transaction.description %>
+                                                </p>
+                                                <p class="text-xs text-gray-200">
+                                                    <%= new Date(transaction.created_at).toLocaleDateString() %>
+                                                </p>
+                                            </div>
+                                            <span class="text-sm font-bold text-red-400">
+                                                 -$<%= Math.abs(transaction.amount) %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        <% } else { %>
+                            <p class="text-gray-300 text-sm">No transactions found.</p>
+                        <% } %>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Secret Modal -->
+            <div id="secretModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-[9999]">
+                <div class="bg-white p-6 rounded-xl shadow-lg w-96">
+                    <h2 class="text-xl font-semibold mb-4">Enter Bank Secret</h2>
+
+                    <form id="secretForm" method="POST">
+                        <input type="password" name="secret" placeholder="Enter your secret key"
+                            class="w-full border border-gray-300 p-3 rounded-lg mb-4 outline-none" required>
+
+                        <div class="flex justify-between">
+                            <button type="button" onclick="closeSecretModal()"
+                                class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">
+                                Cancel
+                            </button>
+
+                            <button class="px-4 py-2 rounded-lg bg-cyan-700 text-white hover:bg-cyan-800">
+                                Confirm Enroll
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <script>
+         
+        function openSecretModal(courseId) {
+        const modal = document.getElementById('secretModal');
+        if (!modal) {
+            console.error('Modal element not found');
+            return;
+        }
+        // Check if modal is already open to prevent multiple opens
+        if (!modal.classList.contains('hidden')) {
+            return;
+        }
+        modal.classList.remove('hidden');
+        // Force display to ensure visibility
+        modal.style.display = 'flex';
+        // Increase z-index to ensure it's on top
+        modal.style.zIndex = '10000';
+        document.getElementById('secretForm').action = `/student/enroll/${courseId}`;
+        // Ensure form is visible
+        const form = document.getElementById('secretForm');
+        if (form) {
+        } else {
+            console.error('Form element not found');
+        }
+
+        // Force the modal to be absolutely positioned and visible
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+
+        // Ensure the modal content is centered
+        const modalContent = modal.querySelector('.bg-white');
+        if (modalContent) {
+            modalContent.style.position = 'absolute';
+            modalContent.style.top = '50%';
+            modalContent.style.left = '50%';
+            modalContent.style.transform = 'translate(-50%, -50%)';
+        }
+
+        // Ensure modal is appended to body
+        document.body.appendChild(modal);
+    }
+
+        function closeSecretModal() {
+        const modal = document.getElementById('secretModal');
+        modal.classList.add('hidden');
+    }
+
+        function showSection(sectionName) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.add('hidden'));
+            const buttons = document.querySelectorAll('.sidebar-btn');
+            buttons.forEach(button => button.classList.remove('active'));
+            document.getElementById(sectionName + '-section').classList.remove('hidden');
+            const activeButton = document.querySelector(`.sidebar-btn[onclick*="showSection('${sectionName}')"]`);
+            if (activeButton) activeButton.classList.add('active');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const section = params.get('section');
+
+        if (section) {
+            showSection(section); 
+        } else {
+            showSection('available'); 
+        }
+        });
+
+        function toggleEditForm() {
+            const card = document.getElementById('profileCard');
+            const form = document.getElementById('editProfileForm');
+            card.classList.toggle('hidden');
+            form.classList.toggle('hidden');
+        }
+
+        function showNotification(message) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = 'bg-green-500 text-white p-4 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 max-w-sm';
+
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200 text-xl leading-none">&times;</button>
+                </div>
+            `;
+
+            container.appendChild(notification);
+
+            // Trigger slide-in animation
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.classList.add('translate-x-full');
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 5000);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                <% if (typeof approved !== 'undefined' && approved.length > 0) { %>
+                    <% approved.forEach(item => { %>
+                        const courseName = "<%= item.course_id && item.course_id.title ? item.course_id.title : 'Unknown Course' %>";
+                        const date = "<%= item.processedAt ? new Date(item.processedAt).toLocaleDateString() : 'Unknown Date' %>";
+                        const message = `${courseName} was approved on ${date}`;
+                        showNotification(message);
+                    <% }) %>
+                <% } %>
+            }, 1000); 
+        });
+    </script>
+</body>
+</html>

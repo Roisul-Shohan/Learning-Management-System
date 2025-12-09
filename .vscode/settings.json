@@ -1,0 +1,5 @@
+{
+    "editor.defaultFormatter": "GitHub.copilot-chat",
+    "github.copilot.chat.alternateGptPrompt.enabled": false,
+    "github.copilot.chat.anthropic.thinking.enabled": false
+}
