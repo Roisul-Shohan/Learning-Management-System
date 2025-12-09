@@ -12,7 +12,6 @@ const path = require('path');
 require('dotenv').config();
 const {connectDB} = require('./config/db');
 
-const ffmpeg = require('fluent-ffmpeg');
 const userModel = require('./models/user-model');
 const quizModel=require('./models/quiz-model');
 const instructorModel = require('./models/instructor-model');
@@ -26,8 +25,6 @@ const certificateModel = require('./models/certificate-model');
 const generateCertificatePDF = require('./config/pdfDocument');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffprobePath = require('@ffprobe-installer/ffprobe').path;
-ffmpeg.setFfmpegPath(ffmpegPath);
-ffmpeg.setFfprobePath(ffprobePath);
 
 (async () => {
   try {

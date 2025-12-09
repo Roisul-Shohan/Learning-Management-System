@@ -1,5 +1,5 @@
 const dbgr = require('debug')('development:mongoose');
-const ffmpeg = require('fluent-ffmpeg');
+const { execFile } = require('child_process');
 const mongoose=require('mongoose');
 const session = require('express-session');
 const flash = require('connect-flash');
@@ -12,6 +12,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 require('dotenv').config();
+const ffprobePath = require('@ffprobe-installer/ffprobe').path;
 const Course=require('../models/course-model');
 const Bank=require('../models/bank-model');
 const {registerUser,loginUser,loginInstructor}=require('../controllers/authController');
@@ -298,16 +299,16 @@ router.post("/add-content", isInstructor, upload.single("file"), async (req, res
             let durationSeconds = 0;
             if (type === 'video') {
                 
-                const readable = new Readable();
-                readable.push(req.file.buffer);
-                readable.push(null);
+                const tmpFile = path.join(os.tmpdir(), Date.now() + '-' + req.file.originalname);
+                fs.writeFileSync(tmpFile, req.file.buffer);
 
-                ffmpeg.ffprobe(readable, (err, metadata) => {
-                    if (!err && metadata.format && metadata.format.duration) {
-                        durationSeconds = Math.floor(metadata.format.duration);
+                execFile(ffprobePath, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1:nokey=1', tmpFile], (err, stdout) => {
+                    if (!err && stdout) {
+                        durationSeconds = Math.floor(parseFloat(stdout.trim()));
                     }
-
                     
+                    fs.unlink(tmpFile, () => {});
+
                     const newContent = new CourseContentModel({
                         course_id,
                         instructor_id,
