@@ -12,7 +12,20 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 require('dotenv').config();
-const ffprobePath = require('@ffprobe-installer/ffprobe').path;
+
+// Lazy load ffprobePath to avoid module load failures on Vercel
+let ffprobePath = null;
+const getFfprobePath = () => {
+  if (ffprobePath) return ffprobePath;
+  try {
+    ffprobePath = require('@ffprobe-installer/ffprobe').path;
+    return ffprobePath;
+  } catch (err) {
+    console.warn('ffprobe binary not available, video duration detection may fail:', err.message);
+    return 'ffprobe'; // fallback to system ffprobe
+  }
+};
+
 const Course=require('../models/course-model');
 const Bank=require('../models/bank-model');
 const {registerUser,loginUser,loginInstructor}=require('../controllers/authController');
@@ -302,7 +315,7 @@ router.post("/add-content", isInstructor, upload.single("file"), async (req, res
                 const tmpFile = path.join(os.tmpdir(), Date.now() + '-' + req.file.originalname);
                 fs.writeFileSync(tmpFile, req.file.buffer);
 
-                execFile(ffprobePath, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1:nokey=1', tmpFile], (err, stdout) => {
+                execFile(getFfprobePath(), ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1:nokey=1', tmpFile], (err, stdout) => {
                     if (!err && stdout) {
                         durationSeconds = Math.floor(parseFloat(stdout.trim()));
                     }
