@@ -12,9 +12,5 @@
       "dest": "api/index.js"
     }
   ],
-  "env": {
-    "MONGODB_URI": "@mongodb_uri",
-    "JWT_KEY": "@jwt_key",
-    "SESSION_SECRET": "@session_secret"
-  }
+
 }
