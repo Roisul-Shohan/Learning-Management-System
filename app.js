@@ -65,6 +65,17 @@ const initializeApp = async () => {
     // Views are at the same level as app.js and api/index.js
     const viewsPath = path.join(__dirname, "views");
     console.log('Views path set to:', viewsPath);
+      // Diagnostic: verify views path exists and list files for Vercel logs
+      try {
+        const exists = fs.existsSync(viewsPath);
+        console.log('Views path exists:', exists);
+        if (exists) {
+          const files = fs.readdirSync(viewsPath);
+          console.log('Views directory files:', files.slice(0, 50));
+        }
+      } catch (diagErr) {
+        console.warn('Error while checking views directory:', diagErr && diagErr.message);
+      }
     app.set("views", viewsPath);
     app.set("view engine", "ejs");
     
