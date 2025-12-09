@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
 
 const certificateSchema = new mongoose.Schema({
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -8,7 +8,7 @@ const certificateSchema = new mongoose.Schema({
      certificate_id: {
         type: String,
         unique: true,
-        default: () => uuidv4()
+        default: () => crypto.randomUUID()
     },
     pdf_data:String,
     final_score: Number,
