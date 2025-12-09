@@ -238,9 +238,11 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
     })
 
 
-    app.listen(3000, () => {
-        console.log("Server is running on port 3000");
-    });
+    if (!process.env.VERCEL) {
+        app.listen(3000, () => {
+            console.log("Server is running on port 3000");
+        });
+    }
 
   } catch (error) {
     console.error("Failed to initialize application:", error);

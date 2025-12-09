@@ -5,37 +5,45 @@ const { GridFSBucket } = require("mongodb");
 
 let gfsBucket = null;
 
+// Cache the database connection for serverless
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 // 📌 Initialize MongoDB + GridFS
 const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    dbgr("✅ MongoDB Connected Successfully");
-
-    const conn = mongoose.connection;
-
-    // Initialize GridFSBucket after connection is established
-    if (conn.readyState === 1) {
-      gfsBucket = new GridFSBucket(conn.db, {
+  if (cached.conn) {
+    // Reuse cached connection
+    if (!gfsBucket) {
+      gfsBucket = new GridFSBucket(cached.conn.db, {
         bucketName: "videos",
       });
       console.log("🎥 GridFSBucket initialized (bucket: videos)");
-    } else {
-      // Fallback: wait for open event if not ready
-      await new Promise((resolve, reject) => {
-        conn.once("open", () => {
-          gfsBucket = new GridFSBucket(conn.db, {
-            bucketName: "videos",
-          });
-          console.log("🎥 GridFSBucket initialized (bucket: videos)");
-          resolve();
-        });
-
-        conn.once("error", (err) => {
-          reject(err);
-        });
-      });
     }
+    return cached.conn;
+  }
 
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(process.env.MONGODB_URI).then((mongoose) => {
+      return mongoose;
+    });
+  }
+
+  try {
+    cached.conn = await cached.promise;
+    dbgr("✅ MongoDB Connected Successfully");
+
+    const conn = cached.conn.connection || cached.conn;
+
+    // Initialize GridFSBucket after connection is established
+    gfsBucket = new GridFSBucket(conn.db, {
+      bucketName: "videos",
+    });
+    console.log("🎥 GridFSBucket initialized (bucket: videos)");
+
+    return cached.conn;
   } catch (error) {
     dbgr("❌ MongoDB connection Error:", error);
     throw error;
