@@ -1,20 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "npm install",
-  "outputDirectory": "./",
-  "includeFiles": [
-    "views/**",
-    "public/**",
-    "config/**",
-    "controllers/**",
-    "middlewares/**",
-    "models/**",
-    "routes/**",
-    "services/**",
-    "utils/**",
-    "app.js"
-  ],
   "routes": [
+    {
+      "src": "/public/(.*)",
+      "dest": "/public/$1"
+    },
     {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
