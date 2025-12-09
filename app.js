@@ -242,9 +242,10 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
         console.log("Server is running on port 3000");
     });
 
-
   } catch (error) {
     console.error("Failed to initialize application:", error);
     process.exit(1);
   }
 })();
+
+module.exports = app;
