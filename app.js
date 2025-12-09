@@ -26,9 +26,14 @@ const generateCertificatePDF = require('./config/pdfDocument');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffprobePath = require('@ffprobe-installer/ffprobe').path;
 
-(async () => {
+let isInitialized = false;
+
+const initializeApp = async () => {
+  if (isInitialized) return;
+  
   try {
     await connectDB();
+    isInitialized = true;
 
     const Course=require('./models/course-model');
     const {registerUser,loginUser,loginInstructor}=require('./controllers/authController');
@@ -37,13 +42,12 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
     const progressRouter=require('./routes/progressRouter');
     const quizRouter=require('./routes/quizRouter');
 
-
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser());
     app.use(express.static(path.join(__dirname, "public")));
     app.use(session({
-        secret: process.env.SESSION_SECRET,
+        secret: process.env.SESSION_SECRET || 'default_secret',
         resave: false,
         saveUninitialized: true,
     }));
@@ -55,31 +59,23 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
     app.use('/progress',progressRouter);
     app.use('/quiz',quizRouter);
 
-
-
     app.get('/', async(req, res) => {
         try{
-
         const courses = await Course.find({});
         const error=req.query.error;
-
         res.render("index", { courses ,error});
-
         }catch(err){
           const error='something went wrong';
           res.render('index',error);
         }
     });
 
-
     app.get('/signup', (req, res) => {
         const error=req.query.error;
         res.render("signup",{error});
     });
 
-
     app.post('/signup',registerUser);
-
 
     app.get('/logout', (req, res) => {
         res.clearCookie('token');
@@ -93,10 +89,8 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
                 res.cookie('token', 'aaaaaa', { httpOnly: true });
                 return res.redirect('/admin_dashboard'); 
             } else {
-               
                  res.redirect('/?error=Password not matched'); 
             }
-
         } catch (err) {
             console.error('Login error:', err);
             res.redirect('/?error=something went wrong');
@@ -104,7 +98,6 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
     });
 
     app.get('/admin_dashboard',async(req,res)=>{
-        
         if(req.cookies.token!=='aaaaaa')return res.redirect('/');
         const {section,error}=req.query;
         const instructors=await instructorModel.find({}).populate('my_courses');
@@ -126,7 +119,6 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
         res.render('admin_dashboard',{students,instructors,transactions,bank,courses,certificateRequests,error});
     });
 
-    
     app.get('/view-details/:id',async(req,res)=>{
         try{
         if(req.cookies.token!=='aaaaaa') return res.redirect('/');
@@ -153,7 +145,6 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
                 const watchedSeconds = progressList.reduce((sum, p) => sum + (p.watched_seconds || 0), 0);
                 const progressPercent =((watchedSeconds / totalDuration) * 100).toFixed(3);
     
-    
                 const submissions = await QuizSubmission.find({
                     user_id: student._id,
                     quiz_id: { $in: quizzes.map(q => q._id) }
@@ -161,7 +152,7 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
     
                 const totalScore = submissions.reduce((sum, sub) => sum + sub.score, 0);
                 const totalPossible = submissions.reduce((sum, sub) => sum + sub.total, 0);
-                let averageQuiz = ((totalScore / totalPossible) * 100).toFixed(2); // percentage
+                let averageQuiz = ((totalScore / totalPossible) * 100).toFixed(2);
                 
                 return {
                     ...student.toObject(),
@@ -177,11 +168,8 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
         }
     });
 
-
     app.get('/approve/:id',async(req,res)=>{
         try{
-
-        
          if(req.cookies.token!=='aaaaaa') return res.redirect('/');
          const pending=await CertificateRequest.findById(req.params.id);
          const user_id=pending.user_id;
@@ -230,24 +218,36 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
 
         res.redirect("/admin_dashboard?section=certificates&approved=true");
 
-
         }catch(err){
           console.log(err);
           res.redirect('/admin_dashboard?section=certificate');
         }
-    })
-
-
-    if (!process.env.VERCEL) {
-        app.listen(3000, () => {
-            console.log("Server is running on port 3000");
-        });
-    }
+    });
 
   } catch (error) {
     console.error("Failed to initialize application:", error);
-    process.exit(1);
+    throw error;
   }
-})();
+};
+
+// Initialize on first request (for Vercel serverless)
+app.use((req, res, next) => {
+  initializeApp().then(() => next()).catch(err => {
+    console.error("Initialization error:", err);
+    res.status(500).json({ error: "Application initialization failed" });
+  });
+});
+
+// Local development: start server on port 3000
+if (!process.env.VERCEL) {
+  initializeApp().then(() => {
+    app.listen(3000, () => {
+      console.log("Server is running on port 3000");
+    });
+  }).catch(err => {
+    console.error("Failed to initialize application:", err);
+    process.exit(1);
+  });
+}
 
 module.exports = app;
