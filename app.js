@@ -38,8 +38,6 @@ const CourseProgress=require('./models/courseProgress-model');
 const CertificateRequest = require('./models/pendingCertificate-model');
 const certificateModel = require('./models/certificate-model');
 const generateCertificatePDF = require('./config/pdfDocument');
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const ffprobePath = require('@ffprobe-installer/ffprobe').path;
 
 let isInitialized = false;
 
