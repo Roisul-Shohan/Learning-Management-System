@@ -10,6 +10,21 @@ const app = express();
 const cookieParser = require("cookie-parser");
 const path = require('path');
 require('dotenv').config();
+
+// Global error handlers to surface crashes in Vercel logs
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err && err.stack ? err.stack : err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason && reason.stack ? reason.stack : reason);
+});
+
+// Lightweight health endpoint that does not require DB initialization.
+// Use this to verify the serverless function is responding quickly.
+app.get('/__health', (req, res) => {
+  res.json({ ok: true, env: process.env.NODE_ENV || 'development' });
+});
 const {connectDB} = require('./config/db');
 
 const userModel = require('./models/user-model');
