@@ -3,7 +3,7 @@
   "buildCommand": "npm install",
   "functions": {
     "api/index.js": {
-      "includeFiles": "views/**",
+      "includeFiles": "../views/**",
       "runtime": "nodejs20.x"
     }
   },

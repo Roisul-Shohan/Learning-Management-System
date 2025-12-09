@@ -61,7 +61,9 @@ const initializeApp = async () => {
     app.use(express.static(path.join(__dirname, "public")));
     
     // Set views directory explicitly for Vercel compatibility
-    const viewsPath = path.join(process.cwd(), "views");
+    // On Vercel, __dirname points to /var/task (the function root)
+    // Views are at the same level as app.js and api/index.js
+    const viewsPath = path.join(__dirname, "views");
     console.log('Views path set to:', viewsPath);
     app.set("views", viewsPath);
     app.set("view engine", "ejs");
