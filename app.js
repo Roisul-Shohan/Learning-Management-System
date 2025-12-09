@@ -59,6 +59,12 @@ const initializeApp = async () => {
     app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser());
     app.use(express.static(path.join(__dirname, "public")));
+    
+    // Set views directory explicitly for Vercel compatibility
+    const viewsPath = path.join(__dirname, "views");
+    app.set("views", viewsPath);
+    app.set("view engine", "ejs");
+    
     app.use(session({
         secret: process.env.SESSION_SECRET || 'default_secret',
         resave: false,
@@ -66,7 +72,6 @@ const initializeApp = async () => {
     }));
 
     app.use(flash());
-    app.set("view engine", "ejs");
     app.use('/student',studentsRouter);
     app.use('/instructor',instructorsRouter);
     app.use('/progress',progressRouter);

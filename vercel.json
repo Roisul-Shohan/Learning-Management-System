@@ -1,5 +1,12 @@
 {
   "version": 2,
+  "buildCommand": "npm install",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "views/**",
+      "runtime": "nodejs20.x"
+    }
+  },
   "routes": [
     {
       "src": "/public/(.*)",
