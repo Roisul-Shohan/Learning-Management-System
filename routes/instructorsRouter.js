@@ -254,6 +254,16 @@ router.get('/approve/:id',isInstructor,async(req,res)=>{
 }
 });
 
+router.get('/reject/:id',isInstructor,async(req,res)=>{
+    try{
+        await pendingEnrollModel.findByIdAndDelete(req.params.id);
+        res.redirect('/instructor/instructor_dashboard?section=enrollments');
+    }catch(err){
+        console.log(err);
+        res.redirect('/instructor/instructor_dashboard?section=enrollments&error=Failed to reject enrollment');
+    }
+});
+
 router.post("/add-content", isInstructor, upload.single("file"), async (req, res) => {
    
     const session = await mongoose.startSession();
@@ -335,22 +345,25 @@ router.post("/add-content", isInstructor, upload.single("file"), async (req, res
                             }));
                             
                             if (progressEntries.length > 0) {
-                                await CourseProgress.insertMany(progressEntries).session(session);
+                               await CourseProgress.insertMany(progressEntries, { session });
                             }
+
+
                             const courses=await courseModel.findById(course_id).session(session);
                             courses.course_content.push(newContent._id);
                             await courses.save({session});
+
                             if(!courses.instructor_id){
-                                const price=courses.price*0.015;
+                                const price=courses.price*0.015*enrolledUsers.length;
 
                                 await bankModel.findOneAndUpdate(
                                     {secret:"LMS_Admin"},
-                                    {balance:{$inc:-price}},
+                                    { $inc: { balance: -price } },
                                     { session }
                                 );
                                 await bankModel.findOneAndUpdate(
                                     {user_id:req.instructor._id},
-                                    {balance:{$inc:price}},
+                                    { $inc: { balance: price } },
                                     { session }
                                 );
                                 
@@ -359,15 +372,15 @@ router.post("/add-content", isInstructor, upload.single("file"), async (req, res
                                     user_id: req.instructor._id,
                                     amount: price,
                                     course_id: course_id,
-                                    description: `You added content in course "${courses.title}". $${price} added to your account.`
+                                    description: `You earned $${price.toFixed(2)} for adding a video in course "${courses.title}".`
                                 }],{ session });
 
                                 const lmsTx = await Transaction.create([{
                                     user_type: 'LMS',
                                     user_id: null,
                                     amount: price,
-                                    course_id: pending.course_id._id,
-                                    description: `Instructor ${req.instructor.username} added content "${newContent.title}". Balance deducted $${price}.`
+                                    course_id:course_id,
+                                     description: `Paid $${price.toFixed(2)} to instructor ${req.instructor.username} for video content "${newContent.title}".` 
                                 }],{ session });
  
                                  await Transaction.findByIdAndUpdate(
@@ -375,8 +388,6 @@ router.post("/add-content", isInstructor, upload.single("file"), async (req, res
                                     { $set: { description: `${instructorTx[0].description} | TxID: ${instructorTx[0]._id}` } },
                                     { session }
                                 );
-
-
                                 await Transaction.findByIdAndUpdate(
                                     lmsTx[0]._id,
                                     { $set: { description: `${lmsTx[0].description} | TxID: ${lmsTx[0]._id}` } },
@@ -423,7 +434,7 @@ router.post("/add-content", isInstructor, upload.single("file"), async (req, res
                
                 if(!courses.instructor_id){
                     
-                    const price=courses.price*0.075;
+                    const price=courses.price*0.0075*enrolledUsers.length;
 
                     await bankModel.findOneAndUpdate({secret:"LMS_Admin"},{
                         balance:{$inc:-price}}, { session }
@@ -444,7 +455,7 @@ router.post("/add-content", isInstructor, upload.single("file"), async (req, res
                         user_type: 'LMS',
                         user_id: null,
                         amount: price,
-                        course_id: pending.course_id._id,
+                        course_id:course_id,
                         description: `Instructor ${req.instructor.username} added content "${newContent.title}". Balance deducted $${price}.`
                     }], { session });
 
@@ -512,7 +523,7 @@ router.get('/view-details/:id',isInstructor,async(req,res)=>{
 
             const totalScore = submissions.reduce((sum, sub) => sum + sub.score, 0);
             const totalPossible = submissions.reduce((sum, sub) => sum + sub.total, 0);
-            let averageQuiz = ((totalScore / totalPossible) * 100).toFixed(2); // percentage
+            let averageQuiz = ((totalScore / totalPossible) * 100).toFixed(2);
             
             return {
                 ...student.toObject(),
@@ -561,6 +572,40 @@ router.get('/view-file/:id', isInstructor, async (req, res) => {
     }
 });
 
+router.get('/course/:id/quizzes', isInstructor, async (req, res) => {
+    try {
+        const courseId = req.params.id;
+        const quizzes = await quizModel.find({ course_id: courseId }).sort({ createdAt: -1 });
+        res.render('instructor_course_quizzes', { user: req.instructor, quizzes, courseId });
+    } catch (err) {
+        console.error('Error fetching quizzes for course:', err);
+        res.redirect('/instructor/instructor_dashboard');
+    }
+});
+
+router.get('/quiz/:id', isInstructor, async (req, res) => {
+    try {
+        const quizId = req.params.id;
+        const quiz = await quizModel.findById(quizId).lean();
+        if (!quiz) return res.redirect('/instructor/instructor_dashboard');
+
+        const submissions = await QuizSubmission.find({ quiz_id: quizId }).lean();
+        const submissionCount = submissions.length;
+        const averageScore = submissionCount > 0 ? (submissions.reduce((s, sub) => s + (sub.score || 0), 0) / submissionCount) : null;
+
+        res.render('instructor_quiz_view', {
+            user: req.instructor,
+            quiz,
+            submissions,
+            submissionCount,
+            averageScore
+        });
+    } catch (err) {
+        console.error('Error loading quiz details:', err);
+        res.redirect('/instructor/instructor_dashboard');
+    }
+});
+
 router.post('/toggle-publish/:id', isInstructor, async (req, res) => {
     try {
         const contentId = req.params.id;
@@ -595,7 +640,6 @@ router.post('/toggle-publish/:id', isInstructor, async (req, res) => {
         });
     }
 });
-
 
 router.get('/check-progress/:id', isInstructor, async (req, res) => {
     try {
@@ -638,8 +682,6 @@ router.get('/check-progress/:id', isInstructor, async (req, res) => {
         res.status(500).send("Server error");
     }
 });
-
-
 
 router.get('/approve-certificate/:id',isInstructor,async(req,res)=>{
     try{

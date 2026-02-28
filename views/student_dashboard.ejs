@@ -212,8 +212,8 @@
 
           <!-- Pending Courses Section -->
             <div id="pending-section" class="section">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">Pending Courses</h1>
                 <% if(pendingCourses && pendingCourses.length > 0) { %>
-                    <h1 class="text-3xl font-bold text-gray-900 mb-6">Pending Courses</h1>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
                         <% pendingCourses.forEach((course) => { %>
                             <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover w-full max-w-xs">
@@ -305,7 +305,6 @@
             <!-- Edit Profile Section -->
             <div id="profile-section" class="section hidden">
             <h1 class="text-3xl font-bold text-gray-900 mb-6 text-center">Edit Profile</h1>
-            <!-- Container for both card and form -->
             <div class="flex justify-center items-center min-h-[60vh]">
                 <!-- Profile Card -->
                 <div id="profileCard" class="bg-gradient-to-tl from-slate-500 via-cyan-100 to-slate-500  rounded-2xl shadow-xl p-10 max-w-md w-full border-none">
@@ -380,16 +379,39 @@
                 </form>
             </div>
            </div>
+
+            <!-- Secret Modal -->
+            <div id="secretModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-[9999]">
+                <div class="bg-white p-6 rounded-xl shadow-lg w-96">
+                    <h2 class="text-xl font-semibold mb-4">Enter Bank Secret</h2>
+
+                    <form id="secretForm" method="POST">
+                        <input type="password" name="secret" placeholder="Enter your secret key"
+                            class="w-full border border-gray-300 p-3 rounded-lg mb-4 outline-none" required>
+
+                        <div class="flex justify-between">
+                            <button type="button" onclick="closeSecretModal()"
+                                class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">
+                                Cancel
+                            </button>
+
+                            <button class="px-4 py-2 rounded-lg bg-cyan-700 text-white hover:bg-cyan-800">
+                                Confirm Enroll
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             
             <!-- Bank Details Section -->
             <div id="bank-section" class="section hidden">
                 <h1 class="text-3xl font-bold text-gray-900 mb-6 text-center">Bank Details</h1>
 
-                <!-- Container for centering -->
+              
                 <div class="flex justify-center items-center min-h-[60vh]">
                     <div class="bg-gradient-to-b from-slate-500 via-slate-400 to-slate-500 rounded-xl shadow-sm p-8 max-w-md w-full">
 
-                    <!-- Current Balance -->
                     <div class="mb-6">
                         <h2 class="text-xl font-semibold text-gray-100">Current Balance</h2>
                         <p class="text-3xl font-bold text-green-900 mt-2">
@@ -397,14 +419,13 @@
                         </p>
                     </div>
 
-                    <!-- Add Balance Button -->
                     <button
                         onclick="document.getElementById('addBalanceForm').classList.toggle('hidden')"
                         class="bg-cyan-800 text-white px-4 py-2 rounded-lg hover:bg-cyan-900 transition">
                         Add Balance
                     </button>
 
-                    <!-- Add Balance Form (initially hidden) -->
+                    <!-- Add Balance Form-->
                     <form id="addBalanceForm" action="/student/add-balance" method="POST" class="hidden mt-4">
                         <input
                             type="number"
@@ -426,14 +447,13 @@
                         </button>
                     </form>
 
-                    <!-- Show Transactions Button -->
                     <button
                         onclick="document.getElementById('transactionsSection').classList.toggle('hidden')"
                         class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition mt-4">
                         Show Transactions
                     </button>
 
-                    <!-- Transactions Section (initially hidden) -->
+                    <!-- Transactions Section-->
                     <div id="transactionsSection" class="hidden mt-6">
                         <h3 class="text-lg font-semibold text-white mb-4">Recent Transactions</h3>
                         <% if (transactions && transactions.length > 0) { %>
@@ -464,29 +484,7 @@
                 </div>
             </div>
 
-            <!-- Secret Modal -->
-            <div id="secretModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-[9999]">
-                <div class="bg-white p-6 rounded-xl shadow-lg w-96">
-                    <h2 class="text-xl font-semibold mb-4">Enter Bank Secret</h2>
-
-                    <form id="secretForm" method="POST">
-                        <input type="password" name="secret" placeholder="Enter your secret key"
-                            class="w-full border border-gray-300 p-3 rounded-lg mb-4 outline-none" required>
-
-                        <div class="flex justify-between">
-                            <button type="button" onclick="closeSecretModal()"
-                                class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">
-                                Cancel
-                            </button>
-
-                            <button class="px-4 py-2 rounded-lg bg-cyan-700 text-white hover:bg-cyan-800">
-                                Confirm Enroll
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
+           
 
         </div>
     </div>
@@ -494,52 +492,16 @@
     <script>
          
         function openSecretModal(courseId) {
-        const modal = document.getElementById('secretModal');
-        if (!modal) {
-            console.error('Modal element not found');
-            return;
-        }
-        // Check if modal is already open to prevent multiple opens
-        if (!modal.classList.contains('hidden')) {
-            return;
-        }
+
+        const modal = document.getElementById('secretModal'); 
         modal.classList.remove('hidden');
-        // Force display to ensure visibility
-        modal.style.display = 'flex';
-        // Increase z-index to ensure it's on top
-        modal.style.zIndex = '10000';
         document.getElementById('secretForm').action = `/student/enroll/${courseId}`;
-        // Ensure form is visible
-        const form = document.getElementById('secretForm');
-        if (form) {
-        } else {
-            console.error('Form element not found');
-        }
-
-        // Force the modal to be absolutely positioned and visible
-        modal.style.position = 'fixed';
-        modal.style.top = '0';
-        modal.style.left = '0';
-        modal.style.width = '100%';
-        modal.style.height = '100%';
-        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-
-        // Ensure the modal content is centered
-        const modalContent = modal.querySelector('.bg-white');
-        if (modalContent) {
-            modalContent.style.position = 'absolute';
-            modalContent.style.top = '50%';
-            modalContent.style.left = '50%';
-            modalContent.style.transform = 'translate(-50%, -50%)';
-        }
-
-        // Ensure modal is appended to body
-        document.body.appendChild(modal);
     }
 
         function closeSecretModal() {
         const modal = document.getElementById('secretModal');
         modal.classList.add('hidden');
+        
     }
 
         function showSection(sectionName) {

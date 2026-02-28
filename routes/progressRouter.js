@@ -160,8 +160,10 @@ router.get("/student/video/:id",isLoggedin, async (req, res) => {
     }
 });
 
-router.get("/teacher/video/:id",isInstructor, async (req, res) => {
+router.get("/teacher/video/:id", async (req, res) => {
+
     try {
+       
         const content = await CourseContent.findById(req.params.id);
         if (!content || !content.file_id) return res.status(404).send("Video not found");
 
@@ -226,6 +228,7 @@ router.get("/teacher/video/:id",isInstructor, async (req, res) => {
         });
     }
 });
+
 
 
 

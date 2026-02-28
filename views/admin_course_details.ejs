@@ -223,7 +223,7 @@
             if (contentType === 'video') {
                 window.open(`/progress/teacher/video/${contentId}`, '_blank');
             }  else {
-                window.open(`/instructor/view-file/${contentId}`, '_blank');
+                window.open(`/view-file/${contentId}`, '_blank');
             }
         }
         
@@ -234,11 +234,7 @@
         });
     
          
-        document.getElementById('contentModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeContentModal();
-            }
-        });
+        
     </script>
     </body>
 </html>

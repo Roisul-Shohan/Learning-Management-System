@@ -110,7 +110,7 @@
                                         <span class="mr-3">🏆</span>
                                         <div>
                                             <p>Certificate Available</p>
-                                            <span class="text-blue-700 ">Download</span>
+                                            <span class="text-blue-700 ">View Certificate</span>
                                         </div>
                                     </div>
                            
@@ -167,14 +167,12 @@
                                     <% if (content.type === 'video') { %>
                                        <%
                                        let videoSrc = '';
-                                       let embedSrc = '';
-                                      
-
+                                       
                                        if (content.file_id) {
                                            videoSrc = `/progress/student/video/${content._id}`;
                                        } %>
                                        
-                                           <video id="video-<%= content._id %>" controls preload="metadata" class="w-full max-w-2xl" crossorigin="anonymous" data-duration="<%= content.duration_seconds %>""  data-watched="<%= progressMap[content._id] || 0 %>">
+                                           <video id="video-<%= content._id %>" controls preload="metadata" class="w-full max-w-2xl" crossorigin="anonymous" data-duration="<%= content.duration_seconds %>" data-watched="<%= progressMap[content._id] || 0 %>">
                                                <% if (videoSrc) { %>
                                                    <source src="<%= videoSrc %>" type="<%= content.file_mimetype || 'video/mp4' %>">
                                                <% } %>
@@ -183,10 +181,12 @@
                                        
                                     <% } else if (content.type === 'pdf') { %>
                                         <div class="border border-gray-300 rounded-lg p-4">
-                                            <iframe src="/progress/student/file/<%= content._id %>"
-                                                    class="w-full h-96 border-0 rounded"
-                                                    title="<%= content.title %>">
-                                            </iframe>
+                                            <div class="relative">
+                                                <iframe src="/progress/student/file/<%= content._id %>"
+                                                        class="w-full h-96 border-0 rounded"
+                                                        title="<%= content.title %>"></iframe>
+                                                <div class="file-overlay absolute inset-0 cursor-pointer" data-url="/progress/student/file/<%= content._id %>" title="Open in new window" aria-hidden="true" style="background:transparent"></div>
+                                            </div>
                                             <div class="mt-2 text-center">
                                                 <a href="/progress/student/file/<%= content._id %>"
                                                 download="<%= content.file_name || 'document.pdf' %>"
@@ -195,12 +195,14 @@
                                                 </a>
                                             </div>
                                         </div>
-                                    <% } else if (content.type === 'slide') { %>
+                                        <% } else if (content.type === 'slide') { %>
                                         <div class="border border-gray-300 rounded-lg p-4">
-                                            <iframe src="/progress/student/file/<%= content._id %>"
-                                                    class="w-full h-96 border-0 rounded"
-                                                    title="<%= content.title %>">
-                                            </iframe>
+                                            <div class="relative">
+                                                <iframe src="/progress/student/file/<%= content._id %>"
+                                                        class="w-full h-96 border-0 rounded"
+                                                        title="<%= content.title %>"></iframe>
+                                                <div class="file-overlay absolute inset-0 cursor-pointer" data-url="/progress/student/file/<%= content._id %>" title="Open in new window" aria-hidden="true" style="background:transparent"></div>
+                                            </div>
                                             <div class="mt-2 text-center">
                                                 <a href="/progress/student/file/<%= content._id %>"
                                                 download="<%= content.file_name || 'slides.pptx' %>"
@@ -281,7 +283,6 @@
                     </div>
                 <% } %>
             </div>
-
     </div>
 
     <!-- Quiz Modal -->
@@ -349,14 +350,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         function updateProgress() {
-            console.log('djjdjjdj',real_watch);
+            console.log('real_watch : ',real_watch);
             fetch('/progress', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     content_id: contentId,
                     watched_seconds: Math.floor(real_watch),
-                    completed: video.ended || (durationSeconds > 0 && video.currentTime >= durationSeconds * 0.9)
+                    completed: watchedSeconds > 0 &&  watchedSeconds >= durationSeconds * 0.9
                 })
             })
             .then(res => res.json())
@@ -365,6 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(err => console.error('Progress update failed:', err));
         }
+        
         let real_watch=0;
         const interval = setInterval(() => {
             if (!isPageVisible) return;
@@ -381,7 +383,6 @@ document.addEventListener('DOMContentLoaded', function() {
               
             }
                     
-
             lastPosition = current;
 
             if (Date.now() - lastUpdate >= 5000) {
@@ -392,8 +393,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
 
         video.addEventListener('ended', () => {
-            maxWatchedPoint = durationSeconds;
-            updateProgress();
+
+            if (watchedSeconds >= durationSeconds * 0.9) {
+                updateProgress();
+            }
             clearInterval(interval);
         });
 
@@ -553,7 +556,6 @@ function showResults(submissionData, quizData) {
 }
 
 function viewResults(quizId) {
-    // Find the quiz data from the rendered quizzes
     const quizzesData = <%- JSON.stringify(quizzes) %>;
     const quiz = quizzesData.find(q => q._id === quizId);
     if (quiz && quiz.submission) {
@@ -632,6 +634,14 @@ async function applyForCertificate(course_id){
     }
 }
 
+ document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.file-overlay').forEach(el => {
+            el.addEventListener('click', function(e) {
+                const url = this.getAttribute('data-url');
+                if (url) window.open(url, '_blank');
+            });
+        });
+    });
 
 </script>
 

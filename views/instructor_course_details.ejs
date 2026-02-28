@@ -176,9 +176,14 @@
         <div class="bg-white rounded-xl shadow-lg p-8">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-gray-900">Course Content</h2>
-                <button onclick="openContentModal()" class=" bg-cyan-500 text-white px-6 py-3 rounded-lg hover:bg-cyan-600  transition-all duration-300 shadow-lg">
-                    ➕ Create New Content
-                </button>
+                <div class="flex items-center gap-3">
+                    <button onclick="location.href='/instructor/course/<%= course._id %>/quizzes'" class=" bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition-all duration-300 shadow-lg text-sm">
+                        📋 See All Previous Quizzes
+                    </button>
+                    <button onclick="openContentModal()" class=" bg-cyan-500 text-white px-6 py-3 rounded-lg hover:bg-cyan-600  transition-all duration-300 shadow-lg">
+                        ➕ Create New Content
+                    </button>
+                </div>
             </div>
 
             <% if (courseContents && courseContents.length > 0) { %>
@@ -464,12 +469,12 @@
             modal.classList.remove('hidden');
         }
 
-        function closeQuizModal() {
+       function closeQuizModal() {
             const modal = document.getElementById('quizModal');
             modal.classList.add('hidden');
         }
 
-         document.getElementById('quizModal').addEventListener('click', function(e) {
+       document.getElementById('quizModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeQuizModal();
             }
@@ -514,6 +519,7 @@ document.getElementById("quizForm").addEventListener("submit", async (e) => {
     const course_id = e.target.course_id.value;
 
     const questionDivs = document.querySelectorAll("#questionsContainer > .questionCard");
+    
     const questions = Array.from(questionDivs).map(div => {
         const question = div.querySelector(".questionText").value;
         const options = Array.from(div.querySelectorAll(".optionInput")).map((input, idx) => `${idx}. ${input.value}`);

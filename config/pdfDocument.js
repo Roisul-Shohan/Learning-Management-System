@@ -3,10 +3,7 @@ const PDFDocument = require("pdfkit");
 function generateCertificatePDF({ userName, courseTitle, instructorName, directorName, certificateId, date, completionPercent, averageQuizScore }) {
     return new Promise((resolve, reject) => {
         try {
-            const doc = new PDFDocument({
-                size: "A4",
-                margin: 50
-            });
+            const doc = new PDFDocument({ size: "A4", margin: 50 });
 
             let buffers = [];
             doc.on("data", buffers.push.bind(buffers));
@@ -16,22 +13,20 @@ function generateCertificatePDF({ userName, courseTitle, instructorName, directo
                 resolve(base64);
             });
 
-            // ************** HEADER BORDER **************
-            doc.rect(10, 10, 595 - 20, 842 - 20)
-                .lineWidth(6)
-                .strokeColor("#4A90E2")
-                .stroke();
+            // ******** HEADER BORDER ********
+            doc.rect(10, 10, doc.page.width - 20, doc.page.height - 20)
+               .lineWidth(6).strokeColor("#4A90E2").stroke();
 
-            // ************** LOGO **************
+            // ******** LOGO ********
             const logoPath = 'public/images/logo.png';
             doc.image(logoPath, (doc.page.width - 100) / 2, 40, { width: 100 });
 
-            // ************** TITLE **************
-            doc.moveDown(5);
+            // ******** TITLE ********
+            doc.moveDown(3);
             doc.fontSize(30).fillColor("#2C3E50").font("Helvetica-Bold")
                .text("Certificate of Completion", { align: "center" });
 
-            doc.moveDown(1.5);
+            doc.moveDown(1);
             doc.fontSize(14).fillColor("#555").font("Helvetica")
                .text("This certifies that", { align: "center" });
 
@@ -45,7 +40,7 @@ function generateCertificatePDF({ userName, courseTitle, instructorName, directo
 
             doc.moveDown(1);
 
-            // ************** COURSE TITLE BOX **************
+            // ******** COURSE TITLE BOX ********
             const boxWidth = 475;
             const boxHeight = 40;
             const boxX = (doc.page.width - boxWidth) / 2;
@@ -55,9 +50,9 @@ function generateCertificatePDF({ userName, courseTitle, instructorName, directo
             doc.fillColor("#222").font("Helvetica-Bold").fontSize(18)
                .text(courseTitle, boxX, boxY + 10, { width: boxWidth, align: "center" });
 
-            doc.moveDown(4);
+            doc.y = boxY + boxHeight + 20; // controlled spacing
 
-            // ************** COMPLETION AND QUIZ SCORE BOXES **************
+            // ******** COMPLETION AND QUIZ BOXES ********
             const boxHeightSmall = 50;
             const gap = 20;
             const smallBoxWidth = 180;
@@ -65,51 +60,39 @@ function generateCertificatePDF({ userName, courseTitle, instructorName, directo
             const startY = doc.y;
 
             // Completion box
-            const completionGrad = doc.linearGradient(startX, startY, startX, startY + boxHeightSmall);
-            completionGrad.stop(0, '#E9F1FF').stop(1, '#D4EDDA');
-            doc.rect(startX, startY, smallBoxWidth, boxHeightSmall).fill(completionGrad);
+            doc.rect(startX, startY, smallBoxWidth, boxHeightSmall).fill("#D4EDDA");
             doc.fillColor("#2C3E50").font("Helvetica-Bold").fontSize(12)
                .text(`Completion: ${completionPercent}%`, startX, startY + 15, { width: smallBoxWidth, align: "center" });
 
-            // Quiz Score box
+            // Quiz box
             const quizX = startX + smallBoxWidth + gap;
-            const quizGrad = doc.linearGradient(quizX, startY, quizX, startY + boxHeightSmall);
-            quizGrad.stop(0, '#FFF4E0').stop(1, '#FFE0B2');
-            doc.rect(quizX, startY, smallBoxWidth, boxHeightSmall).fill(quizGrad);
+            doc.rect(quizX, startY, smallBoxWidth, boxHeightSmall).fill("#FFE0B2");
             doc.fillColor("#2C3E50").font("Helvetica-Bold").fontSize(12)
                .text(`Avg Quiz Score: ${averageQuizScore}%`, quizX, startY + 15, { width: smallBoxWidth, align: "center" });
 
-            doc.moveDown(5);
+            doc.y = startY + boxHeightSmall + 40;
 
-            // ************** DATE AND INSTRUCTOR **************
+            // ******** DATE AND INSTRUCTOR ********
             const infoY = doc.y;
             doc.fontSize(12).fillColor("#2C3E50").font("Helvetica-Bold");
             doc.text(`Date: ${date}`, 70, infoY);
             doc.text(`Instructor: ${instructorName}`, doc.page.width - 220, infoY);
 
-            doc.moveDown(4);
+            doc.y = infoY + 60;
 
-          // ************** CERTIFICATE ID **************
-            const certIdX = doc.page.margins.left; // start from left margin
+            // ******** CERTIFICATE ID ********
+            const certIdX = doc.page.margins.left;
             const certIdY = doc.y;
 
-            doc.fontSize(11)
-            .fillColor("#000000") // black
-            .font("Helvetica")
-            .text("Certificate ID: ", certIdX, certIdY, {
-                continued: true // important! keeps text on same line
-            });
+            doc.fontSize(11).fillColor("#000").font("Helvetica")
+               .text("Certificate ID: ", certIdX, certIdY, { continued: true });
 
-            doc.fillColor("#0000FF") // blue
-            .font("Helvetica-Bold")
-            .text(certificateId, {
-                continued: false // end the line
-            });
+            doc.fillColor("#0000FF").font("Helvetica-Bold")
+               .text(certificateId, { continued: false });
 
-            doc.moveDown(7);
+            doc.y = certIdY + 60;
 
-
-            // ************** SIGNATURES **************
+            // ******** SIGNATURES ********
             const sigY = doc.y;
             const sigWidth = 140;
             const sigGap = 50;
@@ -123,11 +106,11 @@ function generateCertificatePDF({ userName, courseTitle, instructorName, directo
                .text("Course Instructor", 100, sigY + 5, { width: sigWidth, align: "center" });
             doc.text("Academic Director", doc.page.width - 100 - sigWidth, sigY + 5, { width: sigWidth, align: "center" });
 
+            // ******** FOOTER ********
+            const footerHeight = 50;
+            const footerY = doc.page.height - footerHeight - doc.page.margins.bottom;
 
-
-            // ************** FOOTER **************
-            const footerY = 780;
-            doc.rect(10, footerY, doc.page.width - 20, 50).fill("#1F2937");
+            doc.rect(10, footerY, doc.page.width - 20, footerHeight).fill("#1F2937");
             doc.fillColor("#FFF").fontSize(11)
                .text("This certificate is awarded in recognition of outstanding achievement and dedication to learning.", 10, footerY + 15, { width: doc.page.width - 20, align: "center" });
 

@@ -1,50 +1,42 @@
-// config/db.js
 const mongoose = require("mongoose");
-const dbgr = require("debug")("development:mongoose");
 const { GridFSBucket } = require("mongodb");
 
-let gfsBucket = null;
+let gfsBucket; 
 
-// 📌 Initialize MongoDB + GridFS
-const connectDB = async () => {
+async function connectDB() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    dbgr("✅ MongoDB Connected Successfully");
+    console.log("✅ MongoDB Connected");
 
     const conn = mongoose.connection;
 
-    // Initialize GridFSBucket after connection is established
-    if (conn.readyState === 1) {
+    if (conn.readyState === 1) { 
       gfsBucket = new GridFSBucket(conn.db, {
         bucketName: "videos",
       });
-      console.log("🎥 GridFSBucket initialized (bucket: videos)");
+      console.log("🎥 GridFSBucket ready (videos)");
     } else {
-      // Fallback: wait for open event if not ready
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve) => {
         conn.once("open", () => {
           gfsBucket = new GridFSBucket(conn.db, {
             bucketName: "videos",
           });
-          console.log("🎥 GridFSBucket initialized (bucket: videos)");
+          console.log("🎥 GridFSBucket ready (videos)");
           resolve();
-        });
-
-        conn.once("error", (err) => {
-          reject(err);
         });
       });
     }
 
-  } catch (error) {
-    dbgr("❌ MongoDB connection Error:", error);
-    throw error;
+  } catch (err) {
+    console.error("❌ MongoDB connection failed:", err);
+    process.exit(1);
   }
-};
+}
 
-// 📌 Getter for GridFS Bucket (after init)
 function getBucket() {
-  if (!gfsBucket) throw new Error("GridFSBucket not initialized yet");
+  if (!gfsBucket) {
+    throw new Error("GridFSBucket not ready yet");
+  }
   return gfsBucket;
 }
 

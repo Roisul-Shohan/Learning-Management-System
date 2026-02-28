@@ -162,7 +162,6 @@
                     </div>
                 </div>
             
-
              <!-- Bank Details Section -->
             <div id="bank-section" class="section hidden ">
                 <h1 class="text-3xl font-bold text-gray-900 mb-8">Bank Details</h1>
@@ -188,7 +187,7 @@
                     Show Transactions
                 </button>
 
-                <!-- Transactions Section (initially hidden) -->
+                <!-- Transactions Section  -->
                 <div id="transactionsSection" class="hidden mt-6">
                     <h3 class="text-lg font-semibold text-gray-700 mb-4">Recent Transactions</h3>
                     <% if (transactions && transactions.length > 0) { %>
@@ -303,8 +302,7 @@
             <!-- Courses Modal -->
             <div id="EnrollcoursesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
                 <div class="bg-white p-6 rounded-xl shadow-xl w-[600px] max-h-[80vh] flex flex-col">
-                    
-                    <!-- Header -->
+                
                     <div  class="flex justify-between items-center mb-4">
                         <h2 id="header" class="text-2xl font-bold text-gray-800"></h2>
                         <button onclick="closeCoursesModal()" class="text-gray-500 hover:text-gray-700 text-xl">

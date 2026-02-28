@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= quiz.title %> — Quiz Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans">
+<nav class="bg-slate-800 text-white p-4">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <a href="/instructor/instructor_dashboard" class="font-semibold">LMS</a>
+        <div class="flex items-center gap-3">
+            <a href="/instructor/view-details/<%= quiz.course_id %>" class="bg-slate-700 px-3 py-1 rounded">Back to Course</a>
+            <a href="/instructor/logout" class="bg-red-500 px-3 py-1 rounded">Sign Out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="max-w-4xl mx-auto p-6">
+    <header class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800"><%= quiz.title %></h1>
+        <p class="text-sm text-gray-500 mt-1">Created: <%= new Date(quiz.createdAt).toLocaleString() %></p>
+        <div class="mt-3 flex items-center gap-4">
+            <div class="px-3 py-2 bg-white rounded shadow">
+                <span class="text-sm text-gray-500">Questions</span>
+                <div class="text-xl font-semibold"><%= quiz.questions.length %></div>
+            </div>
+            <div class="px-3 py-2 bg-white rounded shadow">
+                <span class="text-sm text-gray-500">Submissions</span>
+                <div class="text-xl font-semibold"><%= submissionCount %></div>
+            </div>
+        </div>
+    </header>
+
+    <section class="space-y-4">
+        <% quiz.questions.forEach((q, idx) => { %>
+            <div class="bg-white rounded-lg p-4 shadow">
+                <div class="flex items-start justify-between">
+                    <h2 class="font-semibold text-lg">Q<%= idx + 1 %>. <%= q.question %></h2>
+                    <span class="text-sm text-gray-400">Points: 1</span>
+                </div>
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <% q.options.forEach((opt, oidx) => { %>
+                        <div class="p-3 rounded border <%= (oidx === q.correctIndex) ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-gray-50' %>">
+                            <div class="flex items-center gap-3">
+                                <div class="w-6 h-6 rounded-full flex items-center justify-center <%= (oidx === q.correctIndex) ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700' %>
+                                "><%= String.fromCharCode(65 + oidx) %></div>
+                                <div class="text-gray-800"><%= opt %></div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+        <% }) %>
+    </section>
+
+   
+</main>
+
+</body>
+</html>

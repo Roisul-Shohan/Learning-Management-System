@@ -5,6 +5,7 @@ const flash = require('connect-flash');
 const bcrypt = require('bcrypt');
 const multer=require('multer');
 const upload=multer();
+const { getBucket } = require("./config/db");
 const express = require('express');
 const app = express();
 const cookieParser = require("cookie-parser");
@@ -183,8 +184,6 @@ ffmpeg.setFfprobePath(ffprobePath);
 
     app.get('/approve/:id',async(req,res)=>{
         try{
-
-        
          if(req.cookies.token!=='aaaaaa') return res.redirect('/');
          const pending=await CertificateRequest.findById(req.params.id);
          const user_id=pending.user_id;
@@ -239,6 +238,40 @@ ffmpeg.setFfprobePath(ffprobePath);
           res.redirect('/admin_dashboard?section=certificate');
         }
     })
+
+    app.get('/view-file/:id', async (req, res) => {
+        try {
+            if(req.cookies.token!=='aaaaaa') return res.redirect('/');
+            const content = await CourseContentModel.findById(req.params.id);
+            if (!content || !content.file_id) return res.status(404).send("File not found");
+    
+            if (!mongoose.Types.ObjectId.isValid(content.file_id)) {
+                return res.status(400).send("Invalid file ID");
+            }
+    
+            const bucket = getBucket();
+            const file_id = new mongoose.Types.ObjectId(content.file_id);
+    
+            const files = await bucket.find({ _id: file_id }).toArray();
+            if (!files || files.length === 0) return res.status(404).send("File missing");
+    
+            const file = files[0];
+            const contentType = file.contentType || content.file_mimetype || 'application/octet-stream';
+    
+            res.setHeader('Content-Type', contentType);
+            res.setHeader('Content-Disposition', `inline; filename="${content.file_name}"`);
+    
+            bucket.openDownloadStream(file_id).pipe(res);
+    
+        } catch (err) {
+            console.error("File streaming error:", err);
+            res.status(500).json({
+                error: "File streaming failed",
+                message: err.message,
+                contentId: req.params.id
+            });
+        }
+    });
 
 
     app.listen(3000, () => {

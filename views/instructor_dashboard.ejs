@@ -91,9 +91,9 @@
 <body class="font-sans bg-gradient-to-b from-slate-500 via-cyan-100 to-slate-500 min-h-screen ">
      
      <!--Bank secret for first time visit-->
-    <% if (!user.bank_id) { %>
-    <div id="bankModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[9999]">
-        <div class="bg-white p-8 rounded-xl shadow-xl w-96 text-center">
+     <% if (!user.bank_id) { %>
+     <div id="bankModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[9999]">
+         <div class="bg-white p-8 rounded-xl shadow-xl w-96 text-center">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Bank Verification</h2>
             <p class="text-gray-600 mb-6">
                 Please set your bank secret to continue.
@@ -194,8 +194,7 @@
                         <h2 class="text-3xl font-bold text-gray-900 mb-12 text-center">My Courses</h2>
                          <% if( mycourses.length>0){ %>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
-                            <!-- Course Card -->
-                            
+                
                              <% mycourses.forEach((course)=>{ %>
                             <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover">
                                 <div class="h-48 flex items-center justify-center overflow-hidden rounded-xl">
@@ -453,7 +452,7 @@
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap flex gap-2">
                                             <a href="/instructor/approve/<%=pending._id %>"><button class="bg-green-100 text-green-700 px-3 py-1 rounded">Approve</button></a>
-                                            <button class="bg-red-100 text-red-700 px-3 py-1 rounded">Reject</button>
+                                           <a href="/instructor/reject/<%=pending._id %>">  <button class="bg-red-100 text-red-700 px-3 py-1 rounded">Reject</button></a>
                                         </td>
                                     </tr>
                                 <% }) %>
@@ -607,7 +606,7 @@
                     </div>
                 </div>
 
-                <!-- Edit Profile Form (Initially Hidden) -->
+                <!-- Edit Profile Form -->
                 <form id="editProfileForm" action="/instructor/update-profile" method="POST" enctype="multipart/form-data" class="bg-gradient-to-t from-cyan-100 via-slate-300 to-cyan-100 rounded-2xl shadow-2xl p-10 max-w-md w-full border border-green-100 hidden">
                     <div class="space-y-6">
                         <div>
@@ -692,7 +691,6 @@
             if (buttonElement) {
                 buttonElement.classList.add('active');
             } else {
-                // Find the button by section name for default load
                 const defaultButton = document.querySelector(`button[onclick*="${sectionName}"]`);
                 if (defaultButton) {
                     defaultButton.classList.add('active');
@@ -721,9 +719,8 @@
             card.classList.toggle('hidden');
             form.classList.toggle('hidden');
         }
-        // Removed toggleInputs function - no longer needed
 
-    function toggleContentInputs() {
+       function toggleContentInputs() {
     const type = document.getElementById("contentType").value;
     const fileInput = document.getElementById("fileInputDiv");
 

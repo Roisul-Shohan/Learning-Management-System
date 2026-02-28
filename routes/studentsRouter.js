@@ -28,6 +28,7 @@ const getBucket=require('../config/db');
 const pendingCertificateModel = require('../models/pendingCertificate-model');
 const certificateModel = require('../models/certificate-model');
 const ProgressModel=require('../models/courseProgress-model');
+const InstructorModel=require('../models/instructor-model');
 
 
 router.get('/signin',(req,res)=>{
@@ -200,7 +201,6 @@ router.post('/enroll/:id', isLoggedin, async (req, res) => {
         }
 
         if (course.instructor_id) {
-
             await PendingEnrollment.create([{
                 learner_id: user._id,
                 learner_name: user.username,
@@ -217,10 +217,10 @@ router.post('/enroll/:id', isLoggedin, async (req, res) => {
         }
 
        
-        const adminBank = await Bank.findOneAndUpdate(
+        await Bank.findOneAndUpdate(
             { secret: "LMS_Admin" },
             { $inc: { balance: price } },
-            { new: true, session }
+            { session }
         );
 
         await Bank.findByIdAndUpdate(
@@ -253,6 +253,55 @@ router.post('/enroll/:id', isLoggedin, async (req, res) => {
                 description: `Student ${user.username} purchased "${course.title}". LMS earned $${price}.`
             }
         ], { session });
+
+        const contents = await CourseContentModel.find({ course_id: course._id }).session(session);
+
+        if (contents.length > 0) {
+            const instructorContentMap = {}; 
+            contents.forEach(content => {
+                const id = content.instructor_id.toString();
+                instructorContentMap[id] = (instructorContentMap[id] || 0) + 1;
+            });
+
+
+         for (const instructorId in instructorContentMap) {
+                const count = instructorContentMap[instructorId];
+                const share =count*0.015;
+                const instructor = await InstructorModel.findById(instructorId).session(session);
+                if (instructor && instructor.bank_id) {
+
+                    await Bank.findByIdAndUpdate(
+                        instructor.bank_id,
+                        { $inc: { balance: share } },
+                        { session }
+                    );
+
+                    await Bank.findOneAndUpdate(
+                        { secret: "LMS_Admin" },
+                        { $inc: { balance:-share } },
+                        { session }
+                    );
+
+                    await Transaction.create([{
+                        user_type: 'LMS',
+                        user_id: null,
+                        course_id: course._id,
+                        amount: -share,
+                        description: `Paid $${share.toFixed(2)} to instructor ${instructor.username} for "${course.title}"`
+                    }], { session });
+
+
+                    await Transaction.create([{
+                        user_type: 'Instructor',
+                        user_id: instructor._id,
+                        course_id: course._id,
+                        amount: share,
+                        description: `you earned $${share.toFixed(2)} from "${course.title}"`
+                    }], { session });
+                }
+            }
+        }
+
 
         await session.commitTransaction();
         session.endSession();
