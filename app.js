@@ -108,26 +108,30 @@ ffmpeg.setFfprobePath(ffprobePath);
     });
 
     app.get('/admin_dashboard',async(req,res)=>{
-        
-        if(req.cookies.token!=='aaaaaa')return res.redirect('/');
-        const {section,error}=req.query;
-        const instructors=await instructorModel.find({}).populate('my_courses');
-        const students = await userModel.find({})
-        .populate({
-        path: "coursesEnrolled",
-        populate: {
-            path: "instructor_id",   
-            model: "Instructor"
+        try{
+            if(req.cookies.token!=='aaaaaa')return res.redirect('/');
+            const {section,error}=req.query;
+            const instructors=await instructorModel.find({}).populate('my_courses');
+            const students = await userModel.find({})
+            .populate({
+            path: "coursesEnrolled",
+            populate: {
+                path: "instructor_id",
+                model: "Instructor"
+            }
+            });
+
+            const bank=await bankModel.findOne({secret:"LMS_Admin"});
+            const courses=await Course.find({});
+            const transactions=await transactionModel.find({user_type:"LMS"});
+
+            const certificateRequests =  await CertificateRequest.find({status: "approved"}).populate('user_id').populate('course_id');
+
+            res.render('admin_dashboard',{students,instructors,transactions,bank,courses,certificateRequests,error});
+        }catch(err){
+            console.error('Admin dashboard error:', err);
+            return res.redirect('/?error=Failed%20to%20load%20admin%20dashboard');
         }
-        });
-
-        const bank=await bankModel.findOne({secret:"LMS_Admin"});
-        const courses=await Course.find({});
-        const transactions=await transactionModel.find({user_type:"LMS"});
-
-        const certificateRequests =  await CertificateRequest.find({status: "approved"}).populate('user_id').populate('course_id');
-            
-        res.render('admin_dashboard',{students,instructors,transactions,bank,courses,certificateRequests,error});
     });
 
     

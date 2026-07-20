@@ -162,12 +162,12 @@
                 <% courses.forEach((course)=>{ %>
                     <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover w-full max-w-xs">
                         <div class="h-48 bg-gray-200 flex items-center justify-center">
-                           <% 
-                                let imageSrc = "/images/default.jpg";
+                           <%
+                                let imageSrc = "/images/default.avif";
 
                                 if (course.image && course.image.trim() !== "") {
                                     imageSrc = course.image;
-                                } 
+                                }
                                 else if (course.image_data && course.image_data.data) {
                                     const base64 = course.image_data.data.toString('base64');
                                     imageSrc = `data:${course.image_data.contentType};base64,${base64}`;
