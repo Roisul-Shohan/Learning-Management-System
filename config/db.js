@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { GridFSBucket } = require("mongodb");
 
-let gfsBucket; 
+let gfsBucket;
 
 async function connectDB() {
   try {
@@ -10,7 +10,7 @@ async function connectDB() {
 
     const conn = mongoose.connection;
 
-    if (conn.readyState === 1) { 
+    if (conn.readyState === 1) {
       gfsBucket = new GridFSBucket(conn.db, {
         bucketName: "videos",
       });
@@ -27,9 +27,24 @@ async function connectDB() {
       });
     }
 
+    await seedAdminBank();
+
   } catch (err) {
     console.error("❌ MongoDB connection failed:", err);
     process.exit(1);
+  }
+}
+
+async function seedAdminBank() {
+  try {
+    const Bank = require("../models/bank-model");
+    const existing = await Bank.findOne({ secret: "LMS_Admin" });
+    if (!existing) {
+      await Bank.create({ user_id: null, balance: 0, secret: "LMS_Admin" });
+      console.log("🏦 Seeded admin bank account (LMS_Admin)");
+    }
+  } catch (err) {
+    console.error("⚠️ Failed to seed admin bank:", err.message);
   }
 }
 

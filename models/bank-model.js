@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const bankSchema = new mongoose.Schema({
-    user_id: { type: mongoose.Schema.Types.ObjectId, required: true}, 
+    user_id: { type: mongoose.Schema.Types.ObjectId, default: null},
     balance: { type: Number, default: 0 },
     secret: { type: String }, 
 }, { collection: 'bank' });
